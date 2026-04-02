@@ -144,7 +144,7 @@
                         <div class="mt-6 flex items-center justify-between">
                             <div class="text-lg font-bold text-pink-600">Rp {{ number_format($item->price, 0, ',', '.') }}</div>
                             @auth
-                                <button onclick="openBookingModal({{ $item->id }}, '{{ $item->name }}')" class="px-4 py-2 bg-pink-500 text-white text-sm font-medium rounded-lg hover:bg-pink-600 transition shadow-md">
+                                <button onclick="openBookingModal({{ $item->id }}, '{{ addslashes($item->name) }}')" class="px-4 py-2 bg-pink-500 text-white text-sm font-medium rounded-lg hover:bg-pink-600 transition shadow-md">
                                     Masukkan Keranjang
                                 </button>
                             @else
@@ -172,11 +172,13 @@
     </div>
 
     <!-- MODAL BOOKING -->
-    <div id="bookingModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="bookingModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity z-40"onclick="closeBookingModal()"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity z-40" onclick="closeBookingModal()"></div>
+            
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">​</span>
+            
+            <div class="relative z-50 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
                 <form action="{{ route('cart.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="treatment_id" id="modalTreatmentId">
@@ -305,13 +307,13 @@
     </div>
 </section>
 
-    <!-- SCRIPTS -->
-    <script>
+<script>
         function openBookingModal(id, name) {
             document.getElementById('modalTreatmentId').value = id;
             document.getElementById('modalTitle').innerText = 'Booking: ' + name;
             document.getElementById('bookingModal').classList.remove('hidden');
         }
+        
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
         }
@@ -335,66 +337,65 @@
             // Tampilkan pesan jika tidak ada hasil
             document.getElementById('noResults').style.display = hasResult ? "none" : "block";
         });
+    </script>
 
-       // document.addEventListener('DOMContentLoaded', function() {
-            // Notifikasi Sukses/Gagal
-@if(session('alert'))
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+    @if(session('alert'))
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
 
-    let alertData = @json(session('alert'));
+        let alertData = @json(session('alert'));
 
-    let config = {
-        icon: alertData.type,
-        title: alertData.title,
-        text: alertData.message,
-        confirmButtonColor: '#db2777',
-    };
+        let config = {
+            icon: alertData.type,
+            title: alertData.title,
+            text: alertData.message,
+            confirmButtonColor: '#db2777',
+        };
 
-    // 🔥 CART
-    if (alertData.context === 'cart') {
-        config.confirmButtonText = 'Lihat Keranjang';
-        config.showCancelButton = true;
-        config.cancelButtonText = 'Lanjut Pilih';
+        // 🔥 CART
+        if (alertData.context === 'cart') {
+            config.confirmButtonText = 'Lihat Keranjang';
+            config.showCancelButton = true;
+            config.cancelButtonText = 'Lanjut Pilih';
 
-        Swal.fire(config).then((result) => {
-            if (result.isConfirmed) {
+            Swal.fire(config).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('cart.index') }}";
+                }
+            });
+        }
+
+        // 🔥 BOOKING
+        else if (alertData.context === 'booking') {
+            config.confirmButtonText = 'Lanjut Bayar';
+
+            Swal.fire(config).then(() => {
                 window.location.href = "{{ route('cart.index') }}";
-            }
-        });
-    //}
+            });
+        }
 
-    // 🔥 BOOKING
-    else if (alertData.context === 'booking') {
-        config.confirmButtonText = 'Lanjut Bayar';
+        // 🔥 PAYMENT
+        else if (alertData.context === 'payment') {
+            config.confirmButtonText = 'Lihat Reservasi';
+            config.showCancelButton = true;
+            config.cancelButtonText = 'Booking Lagi';
 
-        Swal.fire(config).then(() => {
-            window.location.href = "{{ route('cart.index') }}";
-        });
-    }
+            Swal.fire(config).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ route('dashboard') }}";
+                } else {
+                    window.location.href = "{{ url('/') }}#katalog";
+                }
+            });
+        }
 
-    // 🔥 PAYMENT
-    else if (alertData.context === 'payment') {
-        config.confirmButtonText = 'Lihat Reservasi';
-        config.showCancelButton = true;
-        config.cancelButtonText = 'Booking Lagi';
+        else {
+            Swal.fire(config);
+        }
 
-        Swal.fire(config).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = "{{ route('dashboard') }}";
-            } else {
-                window.location.href = "{{ url('/') }}#katalog";
-            }
-        });
-    }
-
-    else {
-        Swal.fire(config);
-    }
-
-});
-</script>
-@endif
+    });
+    </script>
+    @endif
 
     <footer class="bg-white border-t border-gray-200 mt-10">
     <div class="max-w-7xl mx-auto px-6 py-6 text-center text-gray-500 text-sm">
