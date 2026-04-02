@@ -66,16 +66,13 @@
                                                     <p class="text-gray-500"></p> <!-- Spacer -->
 
                                                     <!-- Tombol Hapus -->
-                                                    <form action="{{ route('cart.destroy', $cart->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="font-medium text-red-600 hover:text-red-500 flex items-center gap-1" onclick="return confirm('Yakin ingin menghapus layanan ini?')">
-                                                            <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                            Hapus
-                                                        </button>
-                                                    </form>
+<form action="{{ route('cart.destroy', $cart->id) }}" method="POST" class="delete-form">
+    @csrf
+    @method('DELETE')
+    <button type="button" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 delete-btn">
+        Hapus
+    </button>
+</form>
                                                 </div>
                                             </div>
                                         </li>
@@ -130,4 +127,30 @@
             @endif
         </div>
     </div>
-</x-app-layout>
+<script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const deleteButtons = document.querySelectorAll('.delete-btn');
+                deleteButtons.forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const form = this.closest('.delete-form');
+                        Swal.fire({
+                            title: 'Yakin mau hapus?',
+                            text: "Data yang dihapus tidak bisa dikembalikan!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#db2777', 
+                            cancelButtonColor: '#d1d5db',  
+                            confirmButtonText: 'Ya, hapus!',
+                            cancelButtonText: 'Batal',
+                            reverseButtons: true 
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
+        </x-app-layout> ```

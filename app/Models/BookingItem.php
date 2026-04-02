@@ -23,8 +23,8 @@ class BookingItem extends Model
         return $this->belongsTo(Booking::class);
     }
 
-    public function treatment()
-    {
-        return $this->belongsTo(Treatment::class);
-    }
+public function treatment()
+{
+    return $this->belongsTo(\App\Models\Treatment::class);
+}
 }

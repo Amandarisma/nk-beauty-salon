@@ -23,26 +23,32 @@ Route::get('/cart/total-duration/data', [CartController::class, 'getTotalDuratio
 Route::post('/cart/update-schedule', [CartController::class, 'updateSchedule'])->middleware('auth');
 
 //
-// 🔥 DASHBOARD
+// 🔥 DASHBOARD (BERANDA)
 //
 Route::get('/dashboard', function () {
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
+    return view('dashboard'); // 👉 sekarang jadi beranda
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+//
+// 🔥 RIWAYAT RESERVASI (INI STEP 3 🔥)
+//
+Route::get('/my-bookings', function () {
 
     $bookings = App\Models\Booking::with('items.treatment')
         ->where('user_id', Auth::id())
         ->latest()
         ->get();
 
-    return view('dashboard', compact('bookings'));
+    return view('user.bookings', compact('bookings'));
 
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('user.bookings');
 
+//
+// 🔥 ADMIN
 //
 Route::middleware(['auth', 'admin'])
     ->prefix('admin')
-    ->name('admin.') // 🔥 INI PENTING
+    ->name('admin.')
     ->group(function () {
 
         Route::get('/dashboard', [AdminOperationController::class, 'dashboard'])
@@ -51,30 +57,36 @@ Route::middleware(['auth', 'admin'])
         Route::resource('treatments', TreatmentController::class);
 
         Route::get('/pos', [AdminOperationController::class, 'createWalkIn'])
-            ->name('pos.create'); // ✅ FIX
+            ->name('pos.create');
 
         Route::post('/pos', [AdminOperationController::class, 'storeWalkIn'])
-            ->name('pos.store'); // ✅ FIX
+            ->name('pos.store');
+
+        Route::get('/invoice/{id}', [AdminOperationController::class, 'invoice'])
+            ->name('invoice');
 
         Route::get('/customers', [CustomerController::class, 'index'])
             ->name('customers.index');
 
         Route::get('/inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
-
-        Route::put('/inventory/{id}', [InventoryController::class, 'update'])
-            ->name('inventory.update');
     });
+
+//
+// 🔥 PROFILE (PINDAH KE GLOBAL AUTH 🔥)
+//
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+});
 
 //
 // 🔥 USER
 //
 Route::middleware(['auth', 'user'])->group(function () {
-
-    // PROFIL
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // CART
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -86,8 +98,6 @@ Route::middleware(['auth', 'user'])->group(function () {
     Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
     Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
 
-    Route::post('/checkout', [CheckoutController::class, 'process'])
-    ->name('checkout.process');
 });
 
 require __DIR__.'/auth.php';

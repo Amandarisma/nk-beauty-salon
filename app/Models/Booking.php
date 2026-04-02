@@ -22,13 +22,13 @@ protected $guarded = [];
 //     'booking_status',
 // ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
     public function items()
-    {
-        return $this->hasMany(BookingItem::class);
-    }
+{
+    return $this->hasMany(\App\Models\BookingItem::class);
+}
+
+public function user()
+{
+    return $this->belongsTo(\App\Models\User::class);
+}
 }

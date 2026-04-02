@@ -191,17 +191,24 @@
                             </div>
                             <div>
                                 <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Jam Kedatangan</label>
-                                <select name="booking_time" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 bg-white shadow-sm" required>
-                                    <option value="" disabled selected>-- Pilih Jam (10:00 - 17:00) --</option>
-                                    <option value="10:00">10:00 WIB</option>
-                                    <option value="11:00">11:00 WIB</option>
-                                    <option value="12:00">12:00 WIB</option>
-                                    <option value="13:00">13:00 WIB</option>
-                                    <option value="14:00">14:00 WIB</option>
-                                    <option value="15:00">15:00 WIB</option>
-                                    <option value="16:00">16:00 WIB</option>
-                                    <option value="17:00">17:00 WIB</option>
-                                </select>
+<select name="booking_time" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 bg-white shadow-sm" required>
+    <option value="" disabled selected>-- Pilih Jam (10:00 - 17:00) --</option>
+    <option value="10:00">10:00 WIB</option>
+    <option value="10:30">10:30 WIB</option>
+    <option value="11:00">11:00 WIB</option>
+    <option value="11:30">11:30 WIB</option>
+    <option value="12:00">12:00 WIB</option>
+    <option value="12:30">12:30 WIB</option>
+    <option value="13:00">13:00 WIB</option>
+    <option value="13:30">13:30 WIB</option>
+    <option value="14:00">14:00 WIB</option>
+    <option value="14:30">14:30 WIB</option>
+    <option value="15:00">15:00 WIB</option>
+    <option value="15:30">15:30 WIB</option>
+    <option value="16:00">16:00 WIB</option>
+    <option value="16:30">16:30 WIB</option>
+    <option value="17:00">17:00 WIB</option>
+</select>
                             </div>
                         </div>
                     </div>

@@ -128,11 +128,19 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'id',
+                
+                // 🔥 1. TAMBAH INI AGAR TAMPILAN JAM DI KOTAK KALENDER JADI 24 JAM
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                },
+                
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -140,9 +148,8 @@
                 },
                 buttonText: { today: 'Hari Ini', month: 'Bulan', list: 'List Agenda' },
                 events: @json($events ?? []), 
-                dayMaxEvents: true, // Tampilkan "+more" jika event terlalu banyak dalam 1 hari
+                dayMaxEvents: true, 
                 
-                // POP-UP DETAIL
                 eventClick: function(info) {
                     var props = info.event.extendedProps;
                     
@@ -155,7 +162,7 @@
                                     <p class="text-xl font-bold text-gray-800">${info.event.title}</p>
                                     <p class="text-sm text-gray-500 mt-2 flex items-center gap-1">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        ${info.event.start.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})} WIB
+                                        ${info.event.start.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit', hour12: false})} WIB
                                     </p>
                                 </div>
 

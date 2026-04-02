@@ -6,67 +6,44 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Treatment;
 use App\Models\User;
-use App\Models\BookingItem; // Tambahkan ini
+use App\Models\BookingItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminOperationController extends Controller
 {
-    // 1. DASHBOARD UTAMA (KALENDER)
     public function dashboard()
     {
-        // Widget Ringkasan
         $totalBookings = Booking::count();
         $pendingBookings = Booking::where('booking_status', 'new')->count();
         $totalCustomers = User::where('role', 'user')->count();
 
-        // LOGIKA BARU: Grouping per Booking Header
         $bookings = Booking::with(['user', 'items.treatment'])->get();
         
         $events = [];
+
         foreach($bookings as $booking) {
-            // Kita ambil jadwal dari item pertama sebagai patokan waktu mulai
             $firstItem = $booking->items->first();
-            
+
             if($firstItem) {
-                // Tentukan Warna Event (Pastel Style)
-                // Kuning Soft (Menunggu) vs Hijau Soft (Lunas/DP)
                 $color = ($booking->payment_status == 'paid_dp' || $booking->payment_status == 'paid_full') 
-                         ? '#10b981'  // Emerald Green
-                         : '#f59e0b'; // Amber/Yellow
+                    ? '#10b981'
+                    : '#f59e0b';
 
-                // Nama Customer
-                $customerName = $booking->user ? $booking->user->name : ($booking->guest_name . ' (Walk-in)');
-                
-                // List Treatments (Gabungkan nama treatment jadi satu string)
-                $treatmentNames = $booking->items->map(function($item) {
-                    return '• ' . $item->treatment->name;
-                })->implode('<br>');
-
-                // Hitung Sisa Pelunasan
-                $sisaBayar = $booking->total_price - $booking->dp_amount;
+                $customerName = $booking->user 
+                    ? $booking->user->name 
+                    : ($booking->guest_name . ' (Walk-in)');
 
                 $events[] = [
-                    'title' => $customerName, // Judul cuma Nama Orang
+                    'title' => $customerName,
                     'start' => $firstItem->scheduled_date . 'T' . $firstItem->scheduled_time,
-                    'color' => $color,
-                    // Data tambahan untuk Pop-up
-                    'extendedProps' => [
-                        'treatments' => $treatmentNames,
-                        'total_asli' => number_format($booking->total_price, 0, ',', '.'),
-                        'sudah_bayar' => number_format($booking->dp_amount, 0, ',', '.'),
-                        'sisa_bayar' => number_format($sisaBayar, 0, ',', '.'),
-                        'status' => ucfirst($booking->payment_status)
-                    ]
+                    'color' => $color
                 ];
             }
         }
 
         return view('admin.dashboard', compact('totalBookings', 'pendingBookings', 'totalCustomers', 'events'));
     }
-
-    // ... (Method createWalkIn dan storeWalkIn biarkan tetap sama seperti sebelumnya) ...
-    // Agar tidak error, sertakan method-method tersebut di bawah ini:
 
     public function createWalkIn()
     {
@@ -76,36 +53,88 @@ class AdminOperationController extends Controller
     }
 
     public function storeWalkIn(Request $request)
-    {
-        $request->validate([
-            'date' => 'required|date',
-            'time' => 'required',
-            'treatment_id' => 'required|exists:treatments,id',
+{
+$request->validate([
+    'guest_name' => 'required',
+    'phone' => 'required',
+    'date' => 'required|date',
+    'time' => 'required',
+    'treatment_id' => 'required|exists:treatments,id',
+]);
+
+    return DB::transaction(function () use ($request) {
+
+        $treatment = Treatment::findOrFail($request->treatment_id);
+
+        $startTime = date('H:i:s', strtotime($request->time));
+        $endTime = date('H:i:s', strtotime($request->time . ' + ' . $treatment->duration . ' minutes'));
+
+        // 🔥 NORMALISASI NAMA (biar rapi)
+        $name = ucfirst(strtolower(trim($request->guest_name)));
+
+        // 🔥 CARI CUSTOMER BERDASARKAN NAMA
+       // 🔥 NORMALISASI
+$name = ucfirst(strtolower(trim($request->guest_name)));
+$phone = preg_replace('/[^0-9]/', '', $request->phone);
+
+// 🔥 FORMAT KE 62
+if (substr($phone, 0, 1) == '0') {
+    $phone = '62' . substr($phone, 1);
+}
+
+// 🔥 CARI CUSTOMER BERDASARKAN HP
+$customer = User::where('phone', $phone)->first();
+
+// 🔥 KALAU BELUM ADA → BUAT
+if (!$customer) {
+$customer = User::create([
+    'name' => $name,
+    'phone' => $phone,
+    'email' => $phone . '@walkin.local', // 🔥 FIX
+    'role' => 'user',
+    'password' => bcrypt(uniqid()),
+]);
+}
+
+        // 🔥 KALAU BELUM ADA → BUAT BARU
+        if (!$customer) {
+            $customer = User::create([
+                'name' => $name,
+                'email' => null,
+                'role' => 'user',
+                'password' => bcrypt(uniqid()), // 🔥 random aman
+            ]);
+        }
+
+        // 🔥 SIMPAN BOOKING (JANGAN DOUBLE DATA)
+        $booking = Booking::create([
+            'invoice_code' => 'WIN-' . now()->format('dmy') . '-' . rand(100,999),
+            'user_id' => $customer->id,
+            'guest_name' => null, // 🔥 PENTING: kosongkan
+            'booking_date' => $request->date,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'total_price' => $treatment->price,
+            'dp_amount' => 0,
+            'payment_status' => 'paid_full',
+            'booking_status' => 'completed',
         ]);
 
-        return DB::transaction(function () use ($request) {
-            $treatment = Treatment::find($request->treatment_id);
-            
-            $booking = Booking::create([
-                'invoice_code' => 'WIN-' . now()->format('dmY') . '-' . rand(100,999),
-                'user_id' => $request->user_id, 
-                'guest_name' => $request->guest_name, 
-                'total_price' => $treatment->price,
-                'dp_amount' => 0, 
-                'payment_status' => 'paid_full', 
-                'booking_status' => 'completed',
-                // 'type' => 'walk_in' // Aktifkan jika kolom type ada di migrasi
-            ]);
+        BookingItem::create([
+            'booking_id' => $booking->id,
+            'treatment_id' => $treatment->id,
+            'scheduled_date' => $request->date,
+            'scheduled_time' => $startTime,
+            'price_at_booking' => $treatment->price
+        ]);
 
-            BookingItem::create([
-                'booking_id' => $booking->id,
-                'treatment_id' => $treatment->id,
-                'scheduled_date' => $request->date,
-                'scheduled_time' => $request->time,
-                'price_at_booking' => $treatment->price
-            ]);
+        return redirect()->route('admin.invoice', $booking->id);
+    });
+}
 
-            return redirect()->route('admin.dashboard')->with('success', 'Transaksi Walk-in Berhasil Disimpan!');
-        });
+    public function invoice($id)
+    {
+        $booking = Booking::with('items.treatment')->findOrFail($id);
+        return view('admin.invoice.show', compact('booking'));
     }
 }

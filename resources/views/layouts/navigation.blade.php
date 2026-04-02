@@ -50,13 +50,13 @@
                         @else
 
                             <!-- USER MENU -->
-                            <x-nav-link :href="route('home')">
-                                Beranda
-                            </x-nav-link>
+<x-nav-link :href="route('dashboard')">
+    Beranda
+</x-nav-link>
 
-                            <x-nav-link :href="route('dashboard')">
-                                Riwayat Reservasi Saya
-                            </x-nav-link>
+<x-nav-link :href="route('user.bookings')">
+    Riwayat Reservasi Saya
+</x-nav-link>
 
                         @endif
                     @endauth
@@ -121,13 +121,15 @@
                             Profile
                         </x-dropdown-link>
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')"
-                                             onclick="event.preventDefault(); this.closest('form').submit();">
-                                Logout
-                            </x-dropdown-link>
-                        </form>
+<form method="POST" action="{{ route('logout') }}" id="logout-form">
+    @csrf
+</form>
+
+<a href="#"
+   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+   class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">
+    Logout
+</a>
                     </x-slot>
                 </x-dropdown>
                 @endauth

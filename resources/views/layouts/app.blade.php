@@ -1,46 +1,57 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-        
-        <!-- SWEETALERT CDN (Agar Pop-up muncul di Dashboard) -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
-            @include('layouts.navigation')
+    <!-- Vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
+    <!-- ✅ SweetAlert (CUKUP SEKALI) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
-        </div>
+<body class="font-sans antialiased">
+<div class="min-h-screen bg-gray-100">
 
-        <!-- SCRIPT NOTIFIKASI GLOBAL -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Cek Notifikasi Sukses
-                @if(session('alert'))
+    @include('layouts.navigation')
+
+    @if (isset($header))
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                {{ $header }}
+            </div>
+        </header>
+    @endif
+
+    <main>
+        {{ $slot }}
+    </main>
+
+</div>
+
+<!-- ✅ GLOBAL NOTIFICATION (BERSIH) -->
+@if(session('success'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: "{{ session('success') }}",
+        confirmButtonColor: '#e91e63'
+    });
+});
+</script>
+@endif
+
+@if(session('alert'))
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -63,46 +74,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.location.href = "{{ route('cart.index') }}";
             }
         });
-    }
-
-    else if (alertData.context === 'booking') {
-        config.confirmButtonText = 'Lanjut Bayar';
-        Swal.fire(config);
-    }
-
-    else if (alertData.context === 'payment') {
-        config.confirmButtonText = 'Lihat Reservasi';
-        config.showCancelButton = true;
-        config.cancelButtonText = 'Booking Lagi';
-
-        Swal.fire(config).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = "{{ route('dashboard') }}";
-            } else {
-                window.location.href = "{{ url('/') }}#katalog";
-            }
-        });
-    }
-
-    else {
+    } else {
         Swal.fire(config);
     }
 
 });
 </script>
 @endif
-        </script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-@if(session('success'))
-<script>
-    Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: '{{ session('success') }}',
-        confirmButtonColor: '#e91e63'
-    });
-</script>
-@endif
-    </body>
+</body>
 </html>

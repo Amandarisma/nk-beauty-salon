@@ -27,6 +27,10 @@
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Nama Tamu (Jika bukan member)</label>
                         <input type="text" name="guest_name" class="w-full border rounded p-2" placeholder="Contoh: Ibu Rina">
+                        <div class="mb-4">
+    <label class="block text-gray-700 text-sm font-bold mb-2">No HP</label>
+    <input type="text" name="phone" class="w-full border rounded p-2" placeholder="08xxxxxxx" required>
+</div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -36,7 +40,7 @@
                         </div>
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Jam</label>
-                            <input type="time" name="time" class="w-full border rounded p-2" value="{{ date('H:i') }}" required>
+                            <input type="time" name="time" value="{{ date('H:i') }}">
                         </div>
                     </div>
 

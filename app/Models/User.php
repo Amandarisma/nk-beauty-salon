@@ -49,7 +49,7 @@ class User extends Authenticatable
     // Relasi: User punya banyak pesanan
     public function bookings()
     {
-        return $this->hasMany(Booking::class);
+        return $this->hasMany(\App\Models\Booking::class);
     }
 
     // Relasi: User punya keranjang belanja
