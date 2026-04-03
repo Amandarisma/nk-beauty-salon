@@ -26,8 +26,8 @@ Route::post('/cart/update-schedule', [CartController::class, 'updateSchedule'])-
 // 🔥 DASHBOARD (BERANDA)
 //
 Route::get('/dashboard', function () {
-    return view('dashboard'); // 👉 sekarang jadi beranda
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return redirect()->route('home');
+})->name('dashboard');
 
 //
 // 🔥 RIWAYAT RESERVASI (INI STEP 3 🔥)

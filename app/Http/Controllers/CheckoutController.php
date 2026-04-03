@@ -149,4 +149,43 @@ class CheckoutController extends Controller
                 'context' => 'payment'
             ]);
     }
+
+    /**
+     * 🔥 MENCARI JADWAL YANG SUDAH DIBOOKING (AJAX)
+     */
+    public function getBookedSlots(Request $request)
+    {
+        $date = $request->query('date');
+        if (!$date) return response()->json([]);
+
+        // Cari semua item booking di tanggal tersebut
+        $items = BookingItem::with('treatment')
+            ->where('scheduled_date', $date)
+            ->get();
+
+        $blockedSlots = [];
+
+        foreach ($items as $item) {
+            if (!$item->treatment) continue;
+            
+            $start = Carbon::parse($item->scheduled_time);
+            $end = $start->copy()->addMinutes($item->treatment->duration);
+
+            // Cek setiap interval 30 menit (jam operasional 10:00 - 17:00)
+            $current = Carbon::parse('10:00');
+            $endOfDay = Carbon::parse('17:30');
+
+            while ($current <= $endOfDay) {
+                $slotStart = $current->copy();
+                // Jika jam ini berada di tengah-tengah jadwal orang lain, blokir!
+                if ($slotStart >= $start && $slotStart < $end) {
+                    $blockedSlots[] = $current->format('H:i');
+                }
+                $current->addMinutes(30);
+            }
+        }
+
+        // Kembalikan daftar jam yang harus diblokir ke tampilan depan
+        return response()->json(array_values(array_unique($blockedSlots)));
+    }
 }

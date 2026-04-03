@@ -1,137 +1,94 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-pink-100 sticky top-0 z-50 shadow-sm">
+<nav class="bg-white border-b border-pink-100 sticky top-0 z-[9999] shadow-sm">
 
-    <!-- NAVBAR -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
 
             <!-- LEFT -->
-            <div class="flex">
+            <div class="flex items-center">
 
                 <!-- LOGO -->
-                <div class="shrink-0 flex items-center gap-2">
-                    <a href="{{ auth()->check() && auth()->user()->role === 'admin' ? route('admin.dashboard') : route('dashboard') }}"
-                       class="flex items-center gap-2 transition transform hover:scale-105">
-                        <div class="w-9 h-9 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                            NK
-                        </div>
-                        <span class="font-bold text-xl text-gray-800 tracking-tight">
-                            NKBeauty<span class="text-pink-500">Salon</span>
-                        </span>
-                    </a>
-                </div>
+                <a href="{{ route('home') }}"
+                   class="flex items-center gap-2 hover:scale-105 transition">
+
+                    <div class="w-9 h-9 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                        NK
+                    </div>
+
+                    <span class="font-bold text-xl">
+                        NKBeauty<span class="text-pink-500">Salon</span>
+                    </span>
+                </a>
 
                 <!-- MENU -->
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+                <div class="hidden sm:flex space-x-8 ml-10">
 
-                    @auth
-                        @if(auth()->user()->role === 'admin')
+                    <x-nav-link :href="route('home')" :active="request()->routeIs('home')">
+                        Beranda
+                    </x-nav-link>
 
-                            <!-- ADMIN MENU -->
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                                Dashboard
-                            </x-nav-link>
-
-                            <x-nav-link :href="route('admin.treatments.index')" :active="request()->routeIs('admin.treatments.*')">
-                                Layanan
-                            </x-nav-link>
-
-                            <x-nav-link :href="route('admin.customers.index')">
-                                Pelanggan
-                            </x-nav-link>
-
-                            <x-nav-link :href="route('admin.inventory.index')">
-                                Stok
-                            </x-nav-link>
-
-                            <x-nav-link :href="route('admin.pos.create')">
-                                Kasir
-                            </x-nav-link>
-
-                        @else
-
-                            <!-- USER MENU -->
-<x-nav-link :href="route('dashboard')">
-    Beranda
-</x-nav-link>
-
-<x-nav-link :href="route('user.bookings')">
-    Riwayat Reservasi Saya
-</x-nav-link>
-
-                        @endif
-                    @endauth
+                    <x-nav-link :href="route('user.bookings')" :active="request()->routeIs('user.bookings')">
+                        Riwayat Reservasi Saya
+                    </x-nav-link>
 
                 </div>
             </div>
 
             <!-- RIGHT -->
-            <div class="hidden sm:flex sm:items-center sm:ml-6">
+            <div class="hidden sm:flex items-center ml-6">
 
-                <!-- 🔥 KERANJANG (FIX TOTAL) -->
                 @auth
-                    @if(auth()->user()->role === 'user')
-                        <a href="{{ route('cart.index') }}"
-                           class="relative text-gray-500 hover:text-pink-600 transition group flex items-center gap-1 mr-6 p-2 rounded-full hover:bg-pink-50">
 
-                            <div class="relative">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
-                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5"/>
-                                </svg>
+                    <!-- CART -->
+                    <a href="{{ route('cart.index') }}" class="relative mr-6">
+                        🛒
+                        @php $count = auth()->user()->carts()->count(); @endphp
 
-                                {{-- 🔥 SAFE COUNT --}}
-                                @php
-                                    $cartCount = auth()->user()->carts->count() ?? 0;
-                                @endphp
-
-                                @if($cartCount > 0)
-                                    <span class="absolute -top-1 -right-1 bg-pink-500 text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
-                                        {{ $cartCount }}
-                                    </span>
-                                @endif
-                            </div>
-                        </a>
-                    @endif
-                @endauth
-
-                <!-- DROPDOWN -->
-                @auth
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 rounded-full text-gray-600 hover:text-pink-600 hover:bg-pink-50">
-
-                            <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 text-xs font-bold mr-2">
-                                {{ substr(Auth::user()->name, 0, 1) }}
-                            </div>
-
-                            <div>{{ Auth::user()->name }}</div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <div class="px-4 py-2 text-xs text-gray-400 border-b bg-gray-50">
-                            Login sebagai:
-                            <span class="font-bold text-pink-500">
-                                {{ ucfirst(Auth::user()->role) }}
+                        @if($count > 0)
+                            <span class="absolute -top-2 -right-2 bg-pink-500 text-white text-xs px-1 rounded-full">
+                                {{ $count }}
                             </span>
+                        @endif
+                    </a>
+
+                    <!-- DROPDOWN -->
+                    <div class="relative" x-data="{ open: false }">
+
+                        <!-- BUTTON -->
+                        <button type="button"
+                                @click.stop="open = !open"
+                                class="flex items-center gap-2 text-gray-700 hover:text-pink-600">
+
+                            <div class="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center font-bold text-pink-600">
+                                {{ strtoupper(substr(Auth::user()->name,0,1)) }}
+                            </div>
+
+                            Halo, {{ Auth::user()->name }}
+                        </button>
+
+                        <!-- MENU -->
+                        <div x-show="open"
+                             x-transition
+                             x-cloak
+                             @click.outside="open = false"
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-[9999]">
+
+                            <a href="{{ route('profile.edit') }}"
+                               class="block px-4 py-2 text-sm hover:bg-gray-100">
+                                Setting Profile
+                            </a>
+
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
+                                    Logout
+                                </button>
+                            </form>
+
                         </div>
 
-                        <x-dropdown-link :href="route('profile.edit')">
-                            Profile
-                        </x-dropdown-link>
+                    </div>
 
-<form method="POST" action="{{ route('logout') }}" id="logout-form">
-    @csrf
-</form>
-
-<a href="#"
-   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-   class="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">
-    Logout
-</a>
-                    </x-slot>
-                </x-dropdown>
                 @endauth
 
             </div>

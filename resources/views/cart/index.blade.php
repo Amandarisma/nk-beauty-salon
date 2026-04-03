@@ -66,13 +66,13 @@
                                                     <p class="text-gray-500"></p> <!-- Spacer -->
 
                                                     <!-- Tombol Hapus -->
-<form action="{{ route('cart.destroy', $cart->id) }}" method="POST" class="delete-form">
-    @csrf
-    @method('DELETE')
-    <button type="button" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 delete-btn">
-        Hapus
-    </button>
-</form>
+                                                    <form action="{{ route('cart.destroy', $cart->id) }}" method="POST" class="delete-form">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 delete-btn">
+                                                            Hapus
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </li>
@@ -109,12 +109,12 @@
                             <!-- Tombol Checkout -->
                             <form action="{{ route('checkout.process') }}" method="POST" class="mt-6">
                                 @csrf
-                                <button type="submit" class="w-full bg-gray-900 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg flex justify-center items-center gap-2">
-                                    Lanjut Pembayaran
-                                    <svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                </button>
+<button type="submit" class="w-full bg-gray-900 text-white py-3 rounded-lg font-bold hover:bg-gray-800 transition shadow-lg flex justify-center items-center gap-2">
+    Lanjut Pembayaran
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+    </svg>
+</button>
                             </form>
                             
                             <a href="{{ route('home') }}" class="block text-center mt-4 text-sm text-gray-500 hover:text-gray-700">
@@ -129,6 +129,7 @@
     </div>
 <script>
             document.addEventListener('DOMContentLoaded', function () {
+                // 1. Logika untuk Tombol Hapus (Sudah ada sebelumnya)
                 const deleteButtons = document.querySelectorAll('.delete-btn');
                 deleteButtons.forEach(button => {
                     button.addEventListener('click', function (e) {
@@ -151,6 +152,27 @@
                         });
                     });
                 });
+
+                // 🔥 2. PENANGKAP ERROR DARI CHECKOUT CONTROLLER
+                @if(session('error'))
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Checkout Gagal!',
+                        text: "{{ session('error') }}",
+                        confirmButtonColor: '#db2777',
+                    });
+                @endif
+                
+                // 🔥 3. PENANGKAP PESAN SUKSES
+                @if(session('alert'))
+                    let alertData = @json(session('alert'));
+                    Swal.fire({
+                        icon: alertData.type,
+                        title: alertData.title,
+                        text: alertData.message,
+                        confirmButtonColor: '#db2777',
+                    });
+                @endif
             });
         </script>
-        </x-app-layout> ```
+    </x-app-layout>
