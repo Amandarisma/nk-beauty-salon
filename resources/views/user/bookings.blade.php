@@ -16,7 +16,7 @@
                                 <thead class="bg-pink-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Invoice</th>
-                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tanggal</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Tanggal Kedatangan</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Layanan</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
                                         <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Total</th>
@@ -26,9 +26,18 @@
                                     @foreach($bookings as $booking)
                                     <tr>
                                         <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ $booking->invoice_code }}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">
-                                            {{ $booking->created_at->format('d M Y') }}
+                                        
+                                        <td class="px-6 py-4">
+                                            <div class="flex flex-col">
+                                                <span class="font-bold text-pink-600 text-sm">
+                                                    {{ \Carbon\Carbon::parse($booking->booking_date)->translatedFormat('d F Y') }}
+                                                </span>
+                                                <span class="text-xs text-gray-400 mt-1">
+                                                    Dipesan: {{ $booking->created_at->format('d/m/Y H:i') }}
+                                                </span>
+                                            </div>
                                         </td>
+
                                         <td class="px-6 py-4 text-sm text-gray-500">
                                             <ul>
                                             @foreach($booking->items as $item)
@@ -37,15 +46,19 @@
                                             </ul>
                                         </td>
                                         <td class="px-6 py-4">
-                                            @if($booking->payment_status == 'paid_dp')
+                                            @if($booking->payment_status == 'paid_dp' || $booking->payment_status == 'paid')
                                                 <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">Lunas/DP</span>
                                             @else
                                                 <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold">Belum Bayar</span>
                                             @endif
                                         </td>
-                                        <td class="px-6 py-4 text-sm font-bold text-pink-600">
-                                            Rp {{ number_format($booking->total_price, 0, ',', '.') }}
-                                        </td>
+<td class="px-6 py-4">
+    <div class="flex flex-col text-sm">
+        <span class="text-xs text-gray-500">Total Asli: Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span>
+        <span class="text-xs text-gray-500 border-b border-gray-100 pb-1 mb-1">DP (30%): Rp {{ number_format($booking->dp_amount, 0, ',', '.') }}</span>
+        <span class="font-bold text-pink-600">Sisa: Rp {{ number_format($booking->total_price - $booking->dp_amount, 0, ',', '.') }}</span>
+    </div>
+</td>
                                     </tr>
                                     @endforeach
                                 </tbody>

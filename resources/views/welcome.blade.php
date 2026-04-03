@@ -144,13 +144,13 @@
                                 <p class="font-bold mt-2">📅 {{ \Carbon\Carbon::parse($firstCart->booking_date)->translatedFormat('d F Y') }}</p>
                                 <p class="font-bold">⏰ {{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }} WIB</p>
                             </div>
-                            <input type="hidden" name="booking_date" value="{{ $firstCart->booking_date }}">
-                            <input type="hidden" name="booking_time" value="{{ $firstCart->booking_time }}">
+<input type="hidden" name="booking_date" value="{{ \Carbon\Carbon::parse($firstCart->booking_date)->format('Y-m-d') }}">
+<input type="hidden" name="booking_time" value="{{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }}">
                         @else
                             <div class="mt-2 space-y-4">
                                 <div>
                                     <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Tanggal</label>
-                                    <input type="date" name="booking_date" id="bookingDateInput" onchange="checkAvailableSlots()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm" required>
+<input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Jam Kedatangan</label>
@@ -397,6 +397,18 @@
             Swal.fire(config);
         }
 
+    });
+    </script>
+    @endif
+    @if(session('error'))
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: "{{ session('error') }}",
+            confirmButtonColor: '#db2777',
+        });
     });
     </script>
     @endif
