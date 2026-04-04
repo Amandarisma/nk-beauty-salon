@@ -15,14 +15,14 @@
                             <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                                 Dashboard
                             </x-nav-link>
-                            <x-nav-link :href="route('admin.pos.create')" :active="request()->routeIs('admin.pos.*')">
-                                Kasir Walk-in
-                            </x-nav-link>
                             <x-nav-link :href="route('admin.treatments.index')" :active="request()->routeIs('admin.treatments.*')">
                                 Layanan
                             </x-nav-link>
                             <x-nav-link :href="route('admin.customers.index')" :active="request()->routeIs('admin.customers.*')">
                                 Pelanggan
+                            </x-nav-link>
+                            <x-nav-link :href="route('admin.transactions.index')" :active="request()->routeIs('admin.transactions.*')">
+                                Transaksi
                             </x-nav-link>
                             <x-nav-link :href="route('admin.inventory.index')" :active="request()->routeIs('admin.inventory.*')">
                                 Stok Barang

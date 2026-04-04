@@ -80,8 +80,8 @@
                     <button onclick="window.print()" class="bg-pink-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-pink-700 transition transform hover:-translate-y-1">
                         🖨️ Cetak Struk
                     </button>
-                    <a href="{{ route('admin.pos.create') }}" class="ml-6 text-gray-500 hover:text-pink-600 font-medium transition">
-                        ← Kembali ke Kasir
+                    <a href="{{ route('admin.transactions.index') }}" class="ml-6 text-gray-500 hover:text-pink-600 font-medium transition">
+                        ← Kembali ke Transaksi
                     </a>
                 </div>
 

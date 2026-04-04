@@ -70,6 +70,9 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
+            
+        Route::get('/transactions', [App\Http\Controllers\Admin\TransactionController::class, 'index'])
+            ->name('transactions.index');
     });
 
 //
