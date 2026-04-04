@@ -8,12 +8,11 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // 1. MENAMPILKAN ISI KERANJANG
     public function index()
     {
-    if (auth()->user()->role !== 'user') {
-        abort(403);
-    }
+        if (auth()->user()->role !== 'user') {
+            abort(403);
+        }
         $carts = Cart::with('treatment')
             ->where('user_id', Auth::id())
             ->get();
@@ -21,14 +20,26 @@ class CartController extends Controller
         return view('cart.index', compact('carts'));
     }
 
-    // 2. TAMBAH KE CART
-    public function store(Request $request)
+ public function store(Request $request)
     {
         $request->validate([
             'treatment_id' => 'required|exists:treatments,id',
             'booking_date' => 'required|date|after_or_equal:today',
             'booking_time' => 'required',
         ]);
+
+        // 🔥 LOGIKA SALON: Cegah layanan yang sama masuk 2x di keranjang
+        $sudahAda = Cart::where('user_id', Auth::id())
+                        ->where('treatment_id', $request->treatment_id)
+                        ->exists();
+
+        if ($sudahAda) {
+            return redirect()->back()->with('alert', [
+                'type' => 'warning', // Peringatan warna kuning
+                'title' => 'Sudah Ada! 😅',
+                'message' => 'Layanan ini sudah masuk di keranjangmu. Jika ingin memesan untuk orang lain, silakan buat booking terpisah ya!',
+            ]);
+        }
 
         Cart::create([
             'user_id' => Auth::id(),
@@ -37,15 +48,18 @@ class CartController extends Controller
             'booking_time' => $request->booking_time,
         ]);
 
+        $treatment = \App\Models\Treatment::find($request->treatment_id);
+
         return redirect()->back()->with('alert', [
-    'type' => 'success',
-    'title' => 'Berhasil!',
-    'message' => 'Berhasil ditambahkan ke keranjang.',
-    'context' => 'cart'
-]);
+            'type' => 'success',
+            'title' => 'Masuk Keranjang! 🛒',
+            'message' => 'Layanan <b>' . $treatment->name . '</b> siap untuk di-checkout.',
+            'date' => \Carbon\Carbon::parse($request->booking_date)->translatedFormat('d F Y'),
+            'time' => \Carbon\Carbon::parse($request->booking_time)->format('H:i') . ' WIB',
+            'context' => 'cart_add' 
+        ]);
     }
 
-    // 3. HAPUS CART
     public function destroy($id)
     {
         $cart = Cart::findOrFail($id);
@@ -53,17 +67,16 @@ class CartController extends Controller
         if ($cart->user_id == Auth::id()) {
             $cart->delete();
             return back()->with('alert', [
-    'type' => 'success',
-    'title' => 'Berhasil!',
-    'message' => 'Item berhasil dihapus dari keranjang.',
-    'context' => 'cart'
-]);
+                'type' => 'success',
+                'title' => 'Terhapus!',
+                'message' => 'Item berhasil dibuang dari keranjang.',
+                'context' => 'cart_delete' // <-- Penanda Pop Up Hapus
+            ]);
         }
 
         return back()->with('error', 'Akses ditolak.');
     }
 
-    // 🔥 4. UPDATE SCHEDULE REALTIME
     public function updateSchedule(Request $request)
     {
         $request->validate([
@@ -82,11 +95,9 @@ class CartController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // 🔥 5. TOTAL DURASI (SMART SLOT)
     public function getTotalDuration()
     {
         $user = auth()->user();
-
         $total = Cart::with('treatment')
             ->where('user_id', $user->id)
             ->get()
@@ -94,9 +105,6 @@ class CartController extends Controller
                 return $item->treatment->duration;
             });
 
-        return response()->json([
-            'duration' => $total
-        ]);
+        return response()->json(['duration' => $total]);
     }
-    
 }

@@ -51,20 +51,20 @@
 
                                         <td class="p-4 align-top text-center">
                                             @if($booking->booking_status == 'cancelled')
-                                                <span class="inline-block bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
-                                                    ❌ Dibatalkan
+                                                <span class="inline-block bg-red-50 text-red-600 border border-red-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">
+                                                    Dibatalkan
                                                 </span>
                                             @elseif($booking->booking_status == 'completed')
-                                                <span class="inline-block bg-gray-100 text-gray-500 border border-gray-200 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
-                                                    ✅ Selesai
+                                                <span class="inline-block bg-gray-100 text-gray-500 border border-gray-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">
+                                                    Selesai
                                                 </span>
                                             @elseif($booking->payment_status == 'pending')
-                                                <span class="inline-block bg-yellow-50 text-yellow-600 border border-yellow-200 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">
-                                                    ⏳ Menunggu Bayar
-                                                </span>
+                                                <a href="{{ route('booking.payment', $booking->id) }}" class="inline-block bg-yellow-50 text-yellow-600 border border-yellow-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-yellow-500 hover:text-white transition whitespace-nowrap cursor-pointer">
+                                                    Bayar Sekarang &rarr;
+                                                </a>
                                             @else
-                                                <span class="inline-block bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
-                                                    📅 Terjadwal
+                                                <span class="inline-block bg-emerald-50 text-emerald-600 border border-emerald-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">
+                                                    Terjadwal
                                                 </span>
                                             @endif
                                         </td>
@@ -108,4 +108,20 @@
 
         </div>
     </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(session('alert'))
+                let alertData = @json(session('alert'));
+                Swal.fire({
+                    icon: alertData.type,
+                    title: alertData.title,
+                    text: alertData.message,
+                    confirmButtonColor: '#db2777',
+                    customClass: { popup: 'rounded-3xl' }
+                });
+            @endif
+        });
+    </script>
 </x-app-layout>

@@ -136,27 +136,29 @@ class CheckoutController extends Controller
     /**
      * 🔥 STEP 3
      */
-/**
-     * 🔥 STEP 3
-     */
     public function confirmPayment($id)
     {
         $booking = Booking::findOrFail($id);
 
-        // 🔥 CEK OTOMATIS: Apakah uang masuk (dp_amount) sudah sama dengan Total?
-        // Kalau sama berarti Lunas ('paid'), kalau kurang berarti cuma DP ('paid_dp').
-        $statusPembayaran = ($booking->dp_amount >= $booking->total_price) ? 'paid' : 'paid_dp';
+        // 🔥 LOGIKA PINTAR: Cek dia Lunas atau DP
+        $isLunas = $booking->dp_amount >= $booking->total_price;
+        $statusPembayaran = $isLunas ? 'paid' : 'paid_dp';
 
-        $booking->update([
-            'payment_status' => $statusPembayaran,
-            'booking_status' => 'confirmed',
-        ]);
+        // 🔥 BIKIN PESAN DINAMIS SESUAI PILIHANNYA
+        $pesanPopUp = $isLunas 
+            ? 'Booking kamu sudah dikonfirmasi secara LUNAS. Terima kasih!' 
+            : 'Booking kamu sudah dikonfirmasi dengan pembayaran DP (Uang Muka).';
 
-        return redirect()->route('user.bookings') // Biar langsung balik ke halaman riwayat
+        // Simpan ke database
+        $booking->payment_status = $statusPembayaran;
+        $booking->booking_status = 'confirmed';
+        $booking->save();
+
+        return redirect()->route('user.bookings')
             ->with('alert', [
                 'type' => 'success',
                 'title' => 'Pembayaran Berhasil!',
-                'message' => 'Booking kamu sudah dikonfirmasi.',
+                'message' => $pesanPopUp, // <-- Masukkan pesannya ke sini
                 'context' => 'payment'
             ]);
     }

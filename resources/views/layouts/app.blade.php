@@ -82,5 +82,62 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endif
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(session('alert'))
+                let alertData = @json(session('alert'));
+
+                // JIKA ALERT DARI TAMBAH KERANJANG
+                if (alertData.context === 'cart_add') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: alertData.title,
+                        html: alertData.message + '<br><br><div class="bg-pink-50 p-4 rounded-xl text-sm border border-pink-100 text-left w-max mx-auto font-medium text-gray-700 shadow-inner">📅 ' + alertData.date + '<br>⏰ ' + alertData.time + '</div>',
+                        showCancelButton: true,
+                        confirmButtonColor: '#db2777', // Warna Pink
+                        cancelButtonColor: '#9ca3af',  // Warna Abu-abu
+                        confirmButtonText: 'Lanjut ke Keranjang 🛒',
+                        cancelButtonText: 'Pilih Layanan Lain',
+                        customClass: { popup: 'rounded-3xl' }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = "{{ route('cart.index') }}";
+                        }
+                    });
+                } 
+                // JIKA ALERT DARI HAPUS KERANJANG
+                else if (alertData.context === 'cart_delete') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: alertData.title,
+                        text: alertData.message,
+                        showCancelButton: true,
+                        confirmButtonColor: '#db2777',
+                        cancelButtonColor: '#9ca3af',
+                        confirmButtonText: 'Cek Keranjang',
+                        cancelButtonText: 'Pilih Layanan Baru',
+                        customClass: { popup: 'rounded-3xl' }
+                    }).then((result) => {
+                        if (result.dismiss === Swal.DismissReason.cancel) {
+                            // Lempar ke halaman katalog jika milih abu-abu
+                            window.location.href = "{{ route('home') }}#katalog";
+                        }
+                    });
+                } 
+                // ALERT DEFAULT LAINNYA
+                else {
+                    Swal.fire({
+                        icon: alertData.type,
+                        title: alertData.title,
+                        text: alertData.message,
+                        confirmButtonColor: '#db2777',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                }
+            @endif
+        });
+    </script>
+
 </body>
 </html>

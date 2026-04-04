@@ -144,13 +144,13 @@
                                 <p class="font-bold mt-2">📅 {{ \Carbon\Carbon::parse($firstCart->booking_date)->translatedFormat('d F Y') }}</p>
                                 <p class="font-bold">⏰ {{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }} WIB</p>
                             </div>
-<input type="hidden" name="booking_date" value="{{ \Carbon\Carbon::parse($firstCart->booking_date)->format('Y-m-d') }}">
-<input type="hidden" name="booking_time" value="{{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }}">
+                            <input type="hidden" name="booking_date" value="{{ \Carbon\Carbon::parse($firstCart->booking_date)->format('Y-m-d') }}">
+                            <input type="hidden" name="booking_time" value="{{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }}">
                         @else
                             <div class="mt-2 space-y-4">
                                 <div>
                                     <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Tanggal</label>
-<input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm" required>
+                                    <input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Jam Kedatangan</label>
@@ -187,87 +187,86 @@
 
 
     <section id="tentang" class="py-20 bg-gradient-to-b from-white to-pink-50 border-t border-pink-100">
-    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
 
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-extrabold text-gray-900">
-                Tentang NK Beauty Salon
-            </h2>
-            <p class="mt-4 text-gray-500 max-w-2xl mx-auto">
-                Kami hadir untuk memberikan pengalaman perawatan terbaik dengan pelayanan profesional dan suasana nyaman untuk Anda yang ingin tampil percaya diri setiap hari..
-            </p>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-10">
-
-            <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-bold text-gray-800 mb-3">🌸 Tentang Kami</h3>
-                <p class="text-gray-600">
-                    NK Beauty Salon adalah tempat terbaik untuk merawat dan mempercantik rambut Anda, dengan layanan seperti hair styling, coloring, dan creambath yang dikerjakan oleh tenaga profesional untuk hasil yang sehat, indah, dan tahan lama.
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-extrabold text-gray-900">
+                    Tentang NK Beauty Salon
+                </h2>
+                <p class="mt-4 text-gray-500 max-w-2xl mx-auto">
+                    Kami hadir untuk memberikan pengalaman perawatan terbaik dengan pelayanan profesional dan suasana nyaman untuk Anda yang ingin tampil percaya diri setiap hari..
                 </p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-bold text-gray-800 mb-3">📞 Hubungi Kami </h3>
-                <div class="space-y-2 text-gray-600">
-                    <a href="https://instagram.com/nkbeautysalonjogja" target="_blank" class="block hover:text-pink-500">
-                        📸 Instagram: @nkbeautysalonjogja
-                    </a>
-                    <a href="https://www.tiktok.com/@nk_beautysalonjogja?is_from_webapp=1&sender_device=pc" target="_blank" class="block hover:text-pink-500">
-                        📸 tiktok: @nk_beautysalonjogja
-                    </a>
-<a href="mailto:amandarismawati026@gmail.com" class="block hover:text-pink-500">
-    📧 amandarismawati026@gmail.com
-</a>
-                    <a href="https://wa.me/6287889216190" class="block hover:text-pink-500">
-                        📞 WhatsApp: 0878-8921-6190
-                    </a>
+            <div class="grid md:grid-cols-3 gap-10">
+
+                <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">🌸 Tentang Kami</h3>
+                    <p class="text-gray-600">
+                        NK Beauty Salon adalah tempat terbaik untuk merawat dan mempercantik rambut Anda, dengan layanan seperti hair styling, coloring, dan creambath yang dikerjakan oleh tenaga profesional untuk hasil yang sehat, indah, dan tahan lama.
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">📞 Hubungi Kami </h3>
+                    <div class="space-y-2 text-gray-600">
+                        <a href="https://instagram.com/nkbeautysalonjogja" target="_blank" class="block hover:text-pink-500">
+                            📸 Instagram: @nkbeautysalonjogja
+                        </a>
+                        <a href="https://www.tiktok.com/@nk_beautysalonjogja?is_from_webapp=1&sender_device=pc" target="_blank" class="block hover:text-pink-500">
+                            📸 tiktok: @nk_beautysalonjogja
+                        </a>
+                        <a href="mailto:amandarismawati026@gmail.com" class="block hover:text-pink-500">
+                            📧 amandarismawati026@gmail.com
+                        </a>
+                        <a href="https://wa.me/6287889216190" class="block hover:text-pink-500">
+                            📞 WhatsApp: 0878-8921-6190
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">📍 Lokasi</h3>
+                    <p class="text-gray-600 mb-3">
+                        Jl. Raya Janti No.5, Gowok, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281, Indonesia
+                    </p>
+
+                    <iframe 
+                        src="https://www.google.com/maps?q=Jl.+Raya+Janti+No.5,+Gowok,+Caturtunggal,+Depok,+Sleman,+Yogyakarta&output=embed"
+                        class="w-full h-40 rounded-lg border"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+
+            </div>
+
+            <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                    <p class="text-3xl font-bold text-pink-600">1000+</p>
+                    <p class="text-gray-500 text-sm">Pelanggan Puas</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold text-pink-600">5⭐</p>
+                    <p class="text-gray-500 text-sm">Rating Pelayanan</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold text-pink-600">10+</p>
+                    <p class="text-gray-500 text-sm">Layanan</p>
+                </div>
+                <div>
+                    <p class="text-3xl font-bold text-pink-600">Everyday</p>
+                    <p class="text-gray-500 text-sm">Open 10:00 - 17:00</p>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition">
-                <h3 class="text-xl font-bold text-gray-800 mb-3">📍 Lokasi</h3>
-                <p class="text-gray-600 mb-3">
-                    Jl. Raya Janti No.5, Gowok, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281, Indonesia
-                </p>
-
-                <iframe 
-                    src="https://www.google.com/maps?q=Jl.+Raya+Janti+No.5,+Gowok,+Caturtunggal,+Depok,+Sleman,+Yogyakarta&output=embed"
-                    class="w-full h-40 rounded-lg border"
-                    allowfullscreen>
-                </iframe>
-
+            <div class="mt-16 text-center">
+                <a href="#katalog" class="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-md hover:bg-pink-600 transition">
+                    Booking Sekarang
+                </a>
             </div>
 
         </div>
-
-        <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-                <p class="text-3xl font-bold text-pink-600">1000+</p>
-                <p class="text-gray-500 text-sm">Pelanggan Puas</p>
-            </div>
-            <div>
-                <p class="text-3xl font-bold text-pink-600">5⭐</p>
-                <p class="text-gray-500 text-sm">Rating Pelayanan</p>
-            </div>
-            <div>
-                <p class="text-3xl font-bold text-pink-600">10+</p>
-                <p class="text-gray-500 text-sm">Layanan</p>
-            </div>
-            <div>
-                <p class="text-3xl font-bold text-pink-600">Everyday</p>
-                <p class="text-gray-500 text-sm">Open 10:00 - 17:00</p>
-            </div>
-        </div>
-
-        <div class="mt-16 text-center">
-            <a href="#katalog" class="inline-block bg-pink-500 text-white px-8 py-3 rounded-full font-semibold shadow-md hover:bg-pink-600 transition">
-                Booking Sekarang
-            </a>
-        </div>
-
-    </div>
-</section>
+    </section>
 
 <script>
     // Membuka Modal
@@ -349,57 +348,45 @@
 
         let alertData = @json(session('alert'));
 
-        let config = {
-            icon: alertData.type,
-            title: alertData.title,
-            text: alertData.message,
-            confirmButtonColor: '#db2777',
-        };
-
-        // 🔥 CART
-        if (alertData.context === 'cart') {
-            config.confirmButtonText = 'Lihat Keranjang';
-            //config.showCancelButton = true;
-            //config.cancelButtonText = 'Lanjut Pilih';
-
-            Swal.fire(config).then((result) => {
+        // 🔥 JIKA ALERT DARI TAMBAH KERANJANG (CART_ADD)
+        if (alertData.context === 'cart_add') {
+            Swal.fire({
+                icon: 'success',
+                title: alertData.title,
+                html: alertData.message + '<br><br><div class="bg-pink-50 p-4 rounded-xl text-sm border border-pink-100 text-left w-max mx-auto font-medium text-gray-700 shadow-inner">📅 ' + alertData.date + '<br>⏰ ' + alertData.time + '</div>',
+                showCancelButton: true,
+                confirmButtonColor: '#db2777', 
+                cancelButtonColor: '#9ca3af',  
+                confirmButtonText: 'Lihat Keranjang 🛒',
+                cancelButtonText: 'Lanjut Pilih',
+                customClass: { popup: 'rounded-3xl' }
+            }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = "{{ route('cart.index') }}";
                 }
             });
-        }
-
-        // 🔥 BOOKING
-        else if (alertData.context === 'booking') {
-            config.confirmButtonText = 'Lanjut Bayar';
-
-            Swal.fire(config).then(() => {
-                window.location.href = "{{ route('cart.index') }}";
-            });
-        }
-
-        // 🔥 PAYMENT
-        else if (alertData.context === 'payment') {
-            config.confirmButtonText = 'Lihat Reservasi';
-            config.showCancelButton = true;
-            config.cancelButtonText = 'Booking Lagi';
-
-            Swal.fire(config).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "{{ route('dashboard') }}";
-                } else {
-                    window.location.href = "{{ url('/') }}#katalog";
+        } 
+        // 🔥 ALERT DEFAULT LAINNYA
+        else {
+            Swal.fire({
+                icon: alertData.type,
+                title: alertData.title,
+                html: alertData.message, 
+                confirmButtonColor: '#db2777',
+                customClass: { popup: 'rounded-3xl' }
+            }).then((result) => {
+                if(alertData.context === 'payment') {
+                    window.location.href = "{{ route('user.bookings') }}"; 
+                } else if(alertData.context === 'booking') {
+                    window.location.href = "{{ route('cart.index') }}"; 
                 }
             });
-        }
-
-        else {
-            Swal.fire(config);
         }
 
     });
     </script>
     @endif
+
     @if(session('error'))
     <script>
     document.addEventListener('DOMContentLoaded', function () {

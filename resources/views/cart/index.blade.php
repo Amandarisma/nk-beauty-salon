@@ -36,9 +36,14 @@
                                     <ul role="list" class="-my-6 divide-y divide-gray-100">
                                         @php $totalHarga = 0; @endphp
                                         
-                                        @foreach($carts as $cart)
+@foreach($carts as $cart)
                                         @php $totalHarga += $cart->treatment->price; @endphp
-                                        <li class="py-6 flex">
+                                        <li class="py-6 flex items-center">
+                                            
+                                            <div class="flex-shrink-0 w-8 h-8 bg-pink-100 text-pink-600 font-extrabold rounded-full flex items-center justify-center mr-4 shadow-sm border border-pink-200">
+                                                {{ $loop->iteration }}
+                                            </div>
+
                                             <div class="flex-shrink-0 w-24 h-24 border border-pink-100 rounded-xl overflow-hidden shadow-sm">
                                                 @if($cart->treatment->image)
                                                     <img src="{{ asset('storage/' . $cart->treatment->image) }}" class="w-full h-full object-cover">
@@ -148,13 +153,11 @@
         function updateTagihan(type) {
             const displayTagihan = document.getElementById('display-tagihan');
             let bayar = type === 'full' ? totalHargaAsli : dpHarga;
-            
-            // Format Rupiah
             displayTagihan.innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(bayar);
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // Logika Tombol Hapus
+document.addEventListener('DOMContentLoaded', function () {
+            // 🔥 LOGIKA MENGHAPUS (Beneran Menghapus)
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function (e) {
@@ -169,20 +172,19 @@
                         cancelButtonColor: '#d1d5db',  
                         confirmButtonText: 'Ya, hapus!',
                         cancelButtonText: 'Batal',
-                        customClass: { popup: 'rounded-2xl' }
+                        customClass: { popup: 'rounded-3xl' }
                     }).then((result) => {
+                        // KUNCI UTAMANYA DI SINI! Form harus beneran di-submit sayang!
                         if (result.isConfirmed) { form.submit(); }
                     });
                 });
             });
 
+            // ... (sisa logika pesan error/alert di bawahnya dibiarkan saja)
+
+            // Hanya menangkap error checkout saja
             @if(session('error'))
                 Swal.fire({ icon: 'error', title: 'Oops...', text: "{{ session('error') }}", confirmButtonColor: '#db2777' });
-            @endif
-            
-            @if(session('alert'))
-                let alertData = @json(session('alert'));
-                Swal.fire({ icon: alertData.type, title: alertData.title, text: alertData.message, confirmButtonColor: '#db2777' });
             @endif
         });
     </script>

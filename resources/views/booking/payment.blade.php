@@ -53,19 +53,32 @@
                     </div>
 
                     <!-- TOTAL HARGA -->
-                    <div class="flex justify-end mb-8">
-                        <div class="w-full md:w-1/2 bg-gray-50 p-4 rounded-lg">
-                            <div class="flex justify-between mb-2 text-gray-600">
-                                <span>Total Harga</span>
-                                <span>Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span>
-                            </div>
-                            <div class="flex justify-between mb-2 text-pink-600 font-bold text-lg border-t border-gray-200 pt-2">
-                                <span>Wajib Bayar (DP 30%)</span>
-                                <span>Rp {{ number_format($booking->dp_amount, 0, ',', '.') }}</span>
-                            </div>
-                            <p class="text-xs text-gray-400 text-right mt-1">*Sisa pembayaran dilunasi saat di salon.</p>
-                        </div>
-                    </div>
+<div class="bg-gray-50 rounded-xl p-5 mb-6 border border-gray-100">
+    <div class="flex justify-between text-gray-600 mb-3">
+        <span>Total Harga</span>
+        <span>Rp {{ number_format($booking->total_price, 0, ',', '.') }}</span>
+    </div>
+
+    <div class="flex justify-between font-extrabold text-lg mb-1">
+        @if($booking->dp_amount >= $booking->total_price)
+            <span class="text-pink-600">Wajib Bayar (Lunas 100%)</span>
+        @else
+            <span class="text-pink-600">Wajib Bayar (DP 30%)</span>
+        @endif
+        
+        <span class="text-pink-600">Rp {{ number_format($booking->dp_amount, 0, ',', '.') }}</span>
+    </div>
+
+    @if($booking->dp_amount < $booking->total_price)
+        <div class="text-right text-xs text-gray-400 italic">
+            *Sisa pembayaran dilunasi saat di salon.
+        </div>
+    @else
+        <div class="text-right text-xs text-emerald-500 font-bold mt-1">
+            ✨ Layanan sudah dibayar lunas
+        </div>
+    @endif
+</div>
 
                     <!-- METODE PEMBAYARAN -->
                     <div class="border-t border-gray-200 pt-6">
