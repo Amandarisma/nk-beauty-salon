@@ -75,8 +75,12 @@ class CheckoutController extends Controller
         $startAll = Carbon::parse($firstDate . ' ' . $carts->first()->booking_time);
         $endAll   = $startAll->copy()->addMinutes($totalDuration);
 
-        // 🔥 TOTAL HARGA
+// 🔥 HITUNG TOTAL HARGA
         $totalPrice = $carts->sum(fn($c) => $c->treatment->price);
+
+        // 🔥 LOGIKA BARU: Cek Pilihan Pembayaran (DP 30% atau Lunas 100%)
+        $paymentType = $request->input('payment_type', 'dp'); // Defaultnya DP
+        $dpAmount = ($paymentType === 'full') ? $totalPrice : ($totalPrice * 0.3);
 
         // 🔥 SIMPAN BOOKING
         $booking = Booking::create([
@@ -86,7 +90,7 @@ class CheckoutController extends Controller
             'start_time'     => $startAll->format('H:i:s'),
             'end_time'       => $endAll->format('H:i:s'),
             'total_price'    => $totalPrice,
-            'dp_amount'      => $totalPrice * 0.3,
+            'dp_amount'      => $dpAmount, // <-- Ini yang menentukan nominal masuknya!
             'payment_status' => 'pending',
             'booking_status' => 'pending',
         ]);
@@ -132,16 +136,23 @@ class CheckoutController extends Controller
     /**
      * 🔥 STEP 3
      */
+/**
+     * 🔥 STEP 3
+     */
     public function confirmPayment($id)
     {
         $booking = Booking::findOrFail($id);
 
+        // 🔥 CEK OTOMATIS: Apakah uang masuk (dp_amount) sudah sama dengan Total?
+        // Kalau sama berarti Lunas ('paid'), kalau kurang berarti cuma DP ('paid_dp').
+        $statusPembayaran = ($booking->dp_amount >= $booking->total_price) ? 'paid' : 'paid_dp';
+
         $booking->update([
-            'payment_status' => 'paid',
+            'payment_status' => $statusPembayaran,
             'booking_status' => 'confirmed',
         ]);
 
-        return redirect('/')
+        return redirect()->route('user.bookings') // Biar langsung balik ke halaman riwayat
             ->with('alert', [
                 'type' => 'success',
                 'title' => 'Pembayaran Berhasil!',

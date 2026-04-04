@@ -1,62 +1,75 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-bold text-2xl text-pink-600 leading-tight">
-            {{ __('Data Pelanggan (CRM)') }}
-        </h2>
-    </x-slot>
+    <div class="py-8 bg-gray-50 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="mb-6">
+                <h2 class="font-bold text-2xl text-pink-600 tracking-tight">Data Pelanggan (CRM)</h2>
+                <p class="text-sm text-gray-500 mb-2">Manajemen data member dan analisis loyalitas pelanggan.</p>
+                
+                <div class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs border border-blue-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span><strong>💡 Petunjuk:</strong> Klik pada <b>Nama Pelanggan</b> atau badge <b>Total Booking</b> untuk melihat riwayat lengkap.</span>
+                </div>
+            </div>
 
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-2xl p-6">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-pink-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-pink-500 uppercase tracking-wider">Nama Pelanggan</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-pink-500 uppercase tracking-wider">Email / Kontak</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-pink-500 uppercase tracking-wider">Total Booking</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-pink-500 uppercase tracking-wider">Bergabung Sejak</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-pink-500 uppercase tracking-wider">Layanan Favorit</th>
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden p-6">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-pink-50 text-pink-500 text-xs uppercase tracking-wider">
+                            <th class="p-4 font-bold rounded-tl-xl rounded-bl-xl">Nama Pelanggan</th>
+                            <th class="p-4 font-bold">Email / Kontak</th>
+                            <th class="p-4 font-bold text-center">Total Booking</th>
+                            <th class="p-4 font-bold">Bergabung Sejak</th>
+                            <th class="p-4 font-bold rounded-tr-xl rounded-br-xl">Layanan Favorit</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($customers as $customer)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold">
-                                        {{ substr($customer->name, 0, 1) }}
+                    <tbody class="text-sm text-gray-700 divide-y divide-gray-50">
+                        @forelse($customers as $customer)
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="p-4 flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-600 font-bold flex items-center justify-center text-lg shadow-sm">
+                                        {{ strtoupper(substr($customer->name, 0, 1)) }}
                                     </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $customer->name }}</div>
-                                        <div class="text-xs text-gray-500">ID: CUST-{{ $customer->id }}</div>
+                                    <div>
+                                        <a href="{{ route('admin.customers.show', $customer->id) }}" class="font-bold text-gray-800 hover:text-pink-600 hover:underline transition block">
+                                            {{ $customer->name }}
+                                        </a>
+                                        <p class="text-xs text-gray-400">ID: CUST-{{ $customer->id }}</p>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $customer->email }}</div>
-                                <div class="text-sm text-gray-500">{{ $customer->phone ?? '-' }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    {{ $customer->bookings_count }}x Reservasi
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $customer->created_at->format('d M Y') }}
-<td class="px-4 py-2">
-    @if($customer->favorite_treatment)
-        <span class="bg-pink-100 text-pink-600 px-2 py-1 rounded text-xs">
-            {{ ucfirst(strtolower($customer->favorite_treatment)) ?? '-' }}
-        </span>
-    @else
-        -
-    @endif
-</td>
-                        </tr>
-                        @endforeach
+                                </td>
+                                <td class="p-4">
+                                    <p class="text-gray-800">{{ $customer->email }}</p>
+                                    <p class="text-xs text-gray-500">{{ $customer->phone ?? '-' }}</p>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <a href="{{ route('admin.customers.show', $customer->id) }}" class="bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-100 hover:bg-emerald-100 transition inline-block cursor-pointer">
+                                        {{ $customer->bookings_count }}x Reservasi
+                                    </a>
+                                </td>
+                                <td class="p-4 text-gray-600">
+                                    {{ \Carbon\Carbon::parse($customer->created_at)->translatedFormat('d M Y') }}
+                                </td>
+                                <td class="p-4">
+                                    @if($customer->favorite_treatment != 'Belum ada')
+                                        <span class="bg-pink-50 text-pink-600 px-3 py-1.5 rounded-lg text-xs font-bold">
+                                            {{ $customer->favorite_treatment }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400 text-xs italic">-</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-gray-400">Belum ada pelanggan.</td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
+            
         </div>
     </div>
 </x-app-layout>

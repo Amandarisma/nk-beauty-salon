@@ -15,20 +15,21 @@ class AdminOperationController extends Controller
 {
     public function dashboard()
     {
-        // 1. Ambil Tanggal Hari Ini
         $today = Carbon::today();
 
-        // 2. Hitung Data Statistik untuk Card (Hanya Hari Ini)
+        // 1. Total Booking Hari Ini
         $totalBookingsToday = Booking::whereDate('booking_date', $today)->count();
 
+        // 🔥 2. PERBAIKAN: Hitung semua yang BELUM SELESAI dan BELUM BATAL
         $pendingBookingsToday = Booking::whereDate('booking_date', $today)
-            ->whereIn('booking_status', ['pending', 'confirmed', 'new'])
+            ->whereNotIn('booking_status', ['completed', 'cancelled'])
             ->count();
 
-        $totalCustomers = User::where('role', 'user')->count();
-
-        // 3. Ambil Data Untuk Kalender (Variabel $events)
-        $bookings = Booking::with(['user', 'items.treatment'])->get();
+        // 3. Ambil Data Kalender
+        $bookings = Booking::with(['user', 'items.treatment'])
+            ->where('booking_status', '!=', 'cancelled')
+            ->get();
+            
         $events = [];
 
         foreach($bookings as $booking) {
@@ -36,51 +37,45 @@ class AdminOperationController extends Controller
 
             if($firstItem) {
                 $eventDateTime = Carbon::parse($firstItem->scheduled_date . ' ' . $firstItem->scheduled_time);
-                $isPast = $eventDateTime->isPast();
-
-                // Logika Status Pembayaran
-                $isPending = ($booking->payment_status == 'pending');
-                $sudahDp = $isPending ? 0 : $booking->dp_amount;
+                
+                $isPendingPayment = ($booking->payment_status == 'pending');
+                $sudahDp = $isPendingPayment ? 0 : $booking->dp_amount;
                 $sisaPelunasan = $booking->total_price - $sudahDp;
 
-                // Penentuan Warna Pastel
-                if ($isPast || $booking->booking_status == 'completed') {
-                    $bgColor = '#f3f4f6'; // Abu-abu (Selesai/Lewat)
-                    $borderColor = '#e5e7eb';
-                    $textColor = '#9ca3af';
+// 🔥 LOGIKA WARNA BARU: Otomatis Abu-abu untuk jadwal KEMARIN dan yang sudah SELESAI
+                $isPastDay = Carbon::parse($firstItem->scheduled_date)->isBefore(Carbon::today());
+
+                if ($booking->booking_status == 'completed' || $isPastDay) {
+                    $bgColor = '#f3f4f6'; $borderColor = '#e5e7eb'; $textColor = '#9ca3af'; // Abu-abu (Selesai / Sudah Lewat)
                 } else {
-                    if (!$isPending) {
-                        $bgColor = '#d1fae5'; // Hijau (Lunas/DP)
-                        $borderColor = '#a7f3d0';
-                        $textColor = '#065f46';
+                    if ($isPendingPayment) {
+                        $bgColor = '#fef3c7'; $borderColor = '#fde68a'; $textColor = '#92400e'; // Kuning (Belum Bayar)
                     } else {
-                        $bgColor = '#fef3c7'; // Kuning (Menunggu)
-                        $borderColor = '#fde68a';
-                        $textColor = '#92400e';
+                        $bgColor = '#d1fae5'; $borderColor = '#a7f3d0'; $textColor = '#065f46'; // Hijau (Lunas/DP)
                     }
                 }
 
-                // Nama Pelanggan & Label Walk-in
                 $isWalkIn = strpos($booking->invoice_code, 'WIN-') !== false;
                 $customerName = $booking->user ? $booking->user->name : 'Tamu';
-                if ($isWalkIn) {
-                    $customerName .= ' (Walk-in)';
-                }
+                if ($isWalkIn) $customerName .= ' (Walk-in)';
 
-                // Format List Layanan
                 $treatmentList = $booking->items->map(function($item) {
                     return '• ' . $item->treatment->name;
                 })->implode('<br>');
 
                 $formattedTime = $eventDateTime->translatedFormat('d M Y') . ' - ' . $eventDateTime->format('H:i') . ' WIB';
 
-                // Masukkan ke Array Events
+                // 🔥 PENANDA BARU: Apakah layanan ini masih menunggu untuk dikerjakan?
+                $isWaiting = !in_array($booking->booking_status, ['completed', 'cancelled']);
+
                 $events[] = [
+                    'id' => $booking->id,
                     'title' => $customerName,
                     'start' => $firstItem->scheduled_date . 'T' . $firstItem->scheduled_time,
                     'backgroundColor' => $bgColor,
                     'borderColor' => $borderColor,
                     'textColor' => $textColor,
+                    'is_waiting' => $isWaiting, // Dikirim ke Javascript
                     'waktu_lengkap' => $formattedTime,
                     'layanan' => $treatmentList,
                     'total_asli' => number_format($booking->total_price, 0, ',', '.'),
@@ -90,13 +85,20 @@ class AdminOperationController extends Controller
             }
         }
 
-        // 4. Kirim Semua Variabel ke View
-        return view('admin.dashboard', compact(
-            'totalBookingsToday', 
-            'pendingBookingsToday', 
-            'totalCustomers', 
-            'events'
-        ));
+        return view('admin.dashboard', compact('totalBookingsToday', 'pendingBookingsToday', 'events'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        $booking->booking_status = $request->status; 
+        $booking->save();
+
+        $pesan = $request->status == 'completed' 
+            ? 'Booking berhasil diselesaikan!' 
+            : 'Booking telah dibatalkan.';
+
+        return back()->with('success', $pesan);
     }
 
     public function createWalkIn()

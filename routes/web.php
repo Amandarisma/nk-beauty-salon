@@ -54,6 +54,9 @@ Route::middleware(['auth', 'admin'])
         Route::get('/dashboard', [AdminOperationController::class, 'dashboard'])
             ->name('dashboard');
 
+        Route::patch('/bookings/{id}/status', [App\Http\Controllers\Admin\AdminOperationController::class, 'updateStatus'])
+            ->name('bookings.status');
+
         Route::resource('treatments', TreatmentController::class);
 
         Route::get('/pos', [AdminOperationController::class, 'createWalkIn'])
@@ -67,6 +70,9 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/customers', [CustomerController::class, 'index'])
             ->name('customers.index');
+        //DETAIL PELANGGAN
+        Route::get('/customers/{id}', [App\Http\Controllers\Admin\CustomerController::class, 'show'])
+            ->name('customers.show');
 
         Route::get('/inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
