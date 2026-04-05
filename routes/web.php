@@ -107,6 +107,13 @@ Route::middleware(['auth', 'user'])->group(function () {
     Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
     Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
 
+    // CHECKOUT
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
+    Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
+    
+    // 🔥 RUTE BARU UNTUK BATALKAN BOOKING
+    Route::patch('/booking/cancel/{id}', [CheckoutController::class, 'cancelBooking'])->name('booking.cancel');
 });
 
 require __DIR__.'/auth.php';

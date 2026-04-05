@@ -59,9 +59,19 @@
                                                     Selesai
                                                 </span>
                                             @elseif($booking->payment_status == 'pending')
-                                                <a href="{{ route('booking.payment', $booking->id) }}" class="inline-block bg-yellow-50 text-yellow-600 border border-yellow-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-yellow-500 hover:text-white transition whitespace-nowrap cursor-pointer">
-                                                    Bayar Sekarang &rarr;
-                                                </a>
+                                                <div class="flex flex-col gap-2 items-center">
+                                                    <a href="{{ route('booking.payment', $booking->id) }}" class="inline-block bg-yellow-50 text-yellow-600 border border-yellow-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm hover:bg-yellow-500 hover:text-white transition whitespace-nowrap cursor-pointer">
+                                                        Bayar Sekarang &rarr;
+                                                    </a>
+                                                    
+                                                    <form action="{{ route('booking.cancel', $booking->id) }}" method="POST" class="cancel-booking-form m-0">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="button" class="text-[11px] font-bold text-gray-400 hover:text-red-500 transition underline cancel-booking-btn">
+                                                            Batalkan Reservasi
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             @else
                                                 <span class="inline-block bg-emerald-50 text-emerald-600 border border-emerald-200 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm">
                                                     Terjadwal
@@ -112,6 +122,33 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            
+            // 🔥 LOGIKA POP-UP KONFIRMASI BATAL BOOKING
+            const cancelBookingBtns = document.querySelectorAll('.cancel-booking-btn');
+            cancelBookingBtns.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const form = this.closest('.cancel-booking-form');
+                    
+                    Swal.fire({
+                        title: 'Batalkan Reservasi?',
+                        text: "Jadwal ini akan dibatalkan dan tidak bisa dikembalikan.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ef4444', // Warna merah untuk tombol YA
+                        cancelButtonColor: '#9ca3af',  // Warna abu-abu untuk batal
+                        confirmButtonText: 'Ya, Batalkan!',
+                        cancelButtonText: 'Tidak, Kembali',
+                        customClass: { popup: 'rounded-3xl' } 
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // LOGIKA PESAN SUKSES
             @if(session('alert'))
                 let alertData = @json(session('alert'));
                 Swal.fire({

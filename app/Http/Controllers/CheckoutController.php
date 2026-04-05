@@ -201,4 +201,28 @@ class CheckoutController extends Controller
         // Kembalikan daftar jam yang harus diblokir ke tampilan depan
         return response()->json(array_values(array_unique($blockedSlots)));
     }
+
+    /**
+     * 🔥 FUNGSI USER MEMBATALKAN BOOKING (JIKA BELUM DIBAYAR)
+     */
+    public function cancelBooking($id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        // Pastikan ini punya user yang login, dan statusnya MASIH PENDING
+        if ($booking->user_id == Auth::id() && $booking->payment_status == 'pending') {
+            
+            $booking->update([
+                'booking_status' => 'cancelled'
+            ]);
+
+            return back()->with('alert', [
+                'type' => 'success',
+                'title' => 'Dibatalkan!',
+                'message' => 'Reservasi kamu berhasil dibatalkan.',
+            ]);
+        }
+
+        return back()->with('error', 'Reservasi tidak dapat dibatalkan.');
+    }
 }

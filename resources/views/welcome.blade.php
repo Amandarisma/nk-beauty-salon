@@ -17,6 +17,71 @@
         .treatment-card { transition: all 0.3s ease; }
     </style>
 </head>
+
+<style>
+        /* Efek blur gelap di background */
+        div:where(.swal2-container) {
+            background: rgba(17, 24, 39, 0.5) !important;
+            backdrop-filter: blur(4px) !important;
+        }
+        /* Kotak pop-up membulat ala modal baru */
+        div:where(.swal2-popup) {
+            border-radius: 1.5rem !important; /* rounded-3xl */
+            padding: 2.5rem 1.5rem !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid #fdf2f8 !important; /* border-pink-50 */
+        }
+        /* Judul tebal dan gelap */
+        h2:where(.swal2-title) {
+            font-weight: 800 !important; /* font-extrabold */
+            color: #111827 !important; /* text-gray-900 */
+            font-size: 1.5rem !important; /* text-2xl */
+            margin-bottom: 0.5rem !important;
+        }
+        /* Teks deskripsi / detail */
+        div:where(.swal2-html-container) {
+            color: #6b7280 !important; /* text-gray-500 */
+            font-size: 0.875rem !important; /* text-sm */
+            margin-top: 0 !important;
+        }
+        /* Jarak antar tombol */
+        div:where(.swal2-actions) {
+            margin-top: 2rem !important;
+            gap: 0.75rem !important;
+            width: 100% !important;
+        }
+        /* Tombol OK / Simpan (Pink Cetar) */
+        button:where(.swal2-confirm) {
+            background-color: #db2777 !important; /* bg-pink-600 */
+            color: white !important;
+            border-radius: 1rem !important; /* rounded-2xl */
+            padding: 0.875rem 2rem !important; /* py-3.5 px-8 */
+            font-size: 0.875rem !important; /* text-sm */
+            font-weight: 700 !important; /* font-bold */
+            box-shadow: 0 4px 6px -1px rgba(252, 165, 165, 0.5) !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+        button:where(.swal2-confirm):hover {
+            background-color: #be185d !important; /* hover:bg-pink-700 */
+            transform: translateY(-2px) !important;
+        }
+        /* Tombol Batal / Lanjut (Abu-abu Clean) */
+        button:where(.swal2-cancel) {
+            background-color: white !important;
+            color: #6b7280 !important; /* text-gray-500 */
+            border: 1px solid #e5e7eb !important; /* border-gray-200 */
+            border-radius: 1rem !important; /* rounded-2xl */
+            padding: 0.875rem 2rem !important; /* py-3.5 px-8 */
+            font-size: 0.875rem !important; /* text-sm */
+            font-weight: 700 !important; /* font-bold */
+            transition: all 0.2s ease-in-out !important;
+        }
+        button:where(.swal2-cancel):hover {
+            background-color: #f9fafb !important; /* hover:bg-gray-50 */
+            color: #374151 !important; /* text-gray-700 */
+        }
+    </style>
+
 <body class="antialiased bg-gray-50">
 
     @include('layouts.navigation')
@@ -120,17 +185,24 @@
         </div>
     </div>
 
-    <div id="bookingModal" class="hidden fixed inset-0 z-[9999] overflow-y-auto">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeBookingModal()"></div>
+<div id="bookingModal" class="hidden fixed inset-0 z-[9999] overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeBookingModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">​</span>
             
-            <div class="relative z-50 inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div class="relative z-50 inline-block align-bottom bg-white rounded-3xl text-center overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
                 <form action="{{ route('cart.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="treatment_id" id="modalTreatmentId">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-xl leading-6 font-bold text-gray-900 mb-4" id="modalTitle">Booking Layanan</h3>
+                    
+                    <div class="bg-white px-6 pt-10 pb-6 sm:p-10 sm:pb-8">
+                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-pink-50 mb-6 border border-pink-100 shadow-sm">
+                            <svg class="h-8 w-8 text-pink-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        
+                        <h3 class="text-2xl font-extrabold text-gray-900 mb-2" id="modalTitle">Booking Layanan</h3>
                         
                         @php
                             $hasCart = Auth::check() && Auth::user()->carts->count() > 0;
@@ -138,23 +210,28 @@
                         @endphp
 
                         @if($hasCart)
-                            <div class="bg-pink-50 border border-pink-200 p-4 rounded-xl text-sm text-pink-800 mb-4 shadow-sm">
-                                <p class="font-bold text-pink-600 mb-1">✨ Digabung ke Jadwal Saat Ini</p>
-                                <p>Layanan tambahan ini akan otomatis digabungkan dengan jadwal awal Anda pada:</p>
-                                <p class="font-bold mt-2">📅 {{ \Carbon\Carbon::parse($firstCart->booking_date)->translatedFormat('d F Y') }}</p>
-                                <p class="font-bold">⏰ {{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }} WIB</p>
+                            <p class="text-sm text-gray-500 mb-6">Layanan ini akan otomatis digabungkan dengan jadwal awal Anda.</p>
+                            
+                            <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100 inline-block text-center shadow-inner w-3/4 mx-auto">
+                                <div class="text-gray-700 font-medium space-y-1 text-sm">
+                                    <p>📅 {{ \Carbon\Carbon::parse($firstCart->booking_date)->translatedFormat('d F Y') }}</p>
+                                    <p>⏰ {{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }} WIB</p>
+                                </div>
                             </div>
+
                             <input type="hidden" name="booking_date" value="{{ \Carbon\Carbon::parse($firstCart->booking_date)->format('Y-m-d') }}">
                             <input type="hidden" name="booking_time" value="{{ \Carbon\Carbon::parse($firstCart->booking_time)->format('H:i') }}">
                         @else
-                            <div class="mt-2 space-y-4">
+                            <p class="text-sm text-gray-500 mb-6">Silakan tentukan tanggal dan jam kedatangan Anda.</p>
+                            
+                            <div class="space-y-4 text-left">
                                 <div>
-                                    <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Tanggal</label>
-                                    <input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm" required>
+                                    <label class="block text-gray-600 text-xs font-bold mb-2 ml-1 uppercase tracking-wide">Pilih Tanggal</label>
+                                    <input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border-gray-200 rounded-2xl p-3.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm bg-gray-50/50 transition font-medium text-gray-700" required>
                                 </div>
                                 <div>
-                                    <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Jam Kedatangan</label>
-                                    <select name="booking_time" id="bookingTimeSelect" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-pink-500 focus:border-pink-500 bg-white shadow-sm" required>
+                                    <label class="block text-gray-600 text-xs font-bold mb-2 ml-1 uppercase tracking-wide">Pilih Jam</label>
+                                    <select name="booking_time" id="bookingTimeSelect" class="w-full border-gray-200 rounded-2xl p-3.5 focus:ring-pink-500 focus:border-pink-500 bg-gray-50/50 shadow-sm transition font-medium text-gray-700" required>
                                         <option value="" disabled selected>-- Pilih Tanggal Dulu --</option>
                                         <option value="10:00">10:00 WIB</option>
                                         <option value="10:30">10:30 WIB</option>
@@ -176,9 +253,14 @@
                             </div>
                         @endif
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-pink-600 text-base font-medium text-white hover:bg-pink-700 focus:outline-none sm:w-auto sm:text-sm">Simpan ke Keranjang</button>
-                        <button type="button" onclick="closeBookingModal()" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-100 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm">Batal</button>
+                    
+                    <div class="bg-white px-6 pb-10 sm:px-10 flex flex-col sm:flex-row-reverse gap-3 justify-center">
+                        <button type="submit" class="w-full sm:w-auto inline-flex justify-center items-center rounded-2xl border border-transparent shadow-md shadow-pink-200 px-8 py-3.5 bg-pink-600 text-sm font-bold text-white hover:bg-pink-700 hover:-translate-y-0.5 transition transform focus:outline-none">
+                            Simpan Keranjang
+                        </button>
+                        <button type="button" onclick="closeBookingModal()" class="w-full sm:w-auto inline-flex justify-center items-center rounded-2xl border border-gray-200 px-8 py-3.5 bg-white text-sm font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition focus:outline-none">
+                            Batal
+                        </button>
                     </div>
                 </form>
             </div>
