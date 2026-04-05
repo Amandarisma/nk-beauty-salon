@@ -29,35 +29,35 @@ class CheckoutController extends Controller
             return back()->with('error', 'Keranjang kosong.');
         }
 
-        // 🔥 VALIDASI: HARUS ADA TANGGAL & JAM
+        // Validasi: Harus ada tanggal & jam
         if ($carts->contains(fn($c) => !$c->booking_date || !$c->booking_time)) {
             return back()->with('error', 'Masih ada layanan yang belum pilih tanggal/jam.');
         }
 
-        // 🔥 VALIDASI: HARUS 1 TANGGAL
+        // Validasi: Harus 1 tanggal
         $firstDate = $carts->first()->booking_date;
 
         if (!$carts->every(fn($c) => $c->booking_date == $firstDate)) {
             return back()->with('error', 'Semua layanan harus di tanggal yang sama.');
         }
 
-        // 🔥 SORT BERDASARKAN JAM
+        // Sort berdasarkan jam
         $carts = $carts->sortBy('booking_time')->values();
 
-        // 🔥 CEK BENTROK PER ITEM
+        // 🔥 CEK BENTROK PER ITEM (ABAIKAN YANG PENDING ATAU BATAL)
         foreach ($carts as $cart) {
-
             $start = Carbon::parse($cart->booking_date . ' ' . $cart->booking_time);
             $end   = $start->copy()->addMinutes($cart->treatment->duration);
 
-            // ❌ MASA LALU
             if ($start->lt(now())) {
                 return back()->with('error', 'Tidak bisa booking di waktu yang sudah lewat.');
             }
 
-            // 🔥 CEK OVERLAP DENGAN DATABASE
+            // Cek overlap: HANYA PEDULI JADWAL YANG UDAH BAYAR DAN GAK BATAL
             $conflict = BookingItem::join('bookings', 'booking_items.booking_id', '=', 'bookings.id')
                 ->where('booking_items.scheduled_date', $cart->booking_date)
+                ->whereIn('bookings.payment_status', ['paid', 'paid_dp'])
+                ->where('bookings.booking_status', '!=', 'cancelled')
                 ->where(function ($query) use ($start, $end) {
                     $query->where('booking_items.scheduled_time', '<', $end->format('H:i:s'))
                           ->where(DB::raw("ADDTIME(booking_items.scheduled_time, SEC_TO_TIME(60 * 60))"), '>', $start->format('H:i:s'));
@@ -69,20 +69,17 @@ class CheckoutController extends Controller
             }
         }
 
-        // 🔥 HITUNG TOTAL DURASI
+        // Hitung total durasi dan harga
         $totalDuration = $carts->sum(fn($c) => $c->treatment->duration);
-
         $startAll = Carbon::parse($firstDate . ' ' . $carts->first()->booking_time);
         $endAll   = $startAll->copy()->addMinutes($totalDuration);
-
-// 🔥 HITUNG TOTAL HARGA
         $totalPrice = $carts->sum(fn($c) => $c->treatment->price);
 
-        // 🔥 LOGIKA BARU: Cek Pilihan Pembayaran (DP 30% atau Lunas 100%)
-        $paymentType = $request->input('payment_type', 'dp'); // Defaultnya DP
+        // Opsi Pembayaran Lunas/DP
+        $paymentType = $request->input('payment_type', 'dp');
         $dpAmount = ($paymentType === 'full') ? $totalPrice : ($totalPrice * 0.3);
 
-        // 🔥 SIMPAN BOOKING
+        // Simpan Booking ke Database
         $booking = Booking::create([
             'invoice_code'   => 'INV-' . now()->format('YmdHis') . '-' . $user->id,
             'user_id'        => $user->id,
@@ -90,16 +87,14 @@ class CheckoutController extends Controller
             'start_time'     => $startAll->format('H:i:s'),
             'end_time'       => $endAll->format('H:i:s'),
             'total_price'    => $totalPrice,
-            'dp_amount'      => $dpAmount, // <-- Ini yang menentukan nominal masuknya!
+            'dp_amount'      => $dpAmount,
             'payment_status' => 'pending',
             'booking_status' => 'pending',
         ]);
 
-        // 🔥 SIMPAN ITEM (SEQUENTIAL TIME)
+        // Simpan Item Layanan
         $currentTime = $startAll->copy();
-
         foreach ($carts as $cart) {
-
             BookingItem::create([
                 'booking_id'       => $booking->id,
                 'treatment_id'     => $cart->treatment_id,
@@ -107,25 +102,17 @@ class CheckoutController extends Controller
                 'scheduled_time'   => $currentTime->format('H:i:s'),
                 'price_at_booking' => $cart->treatment->price,
             ]);
-
-            // ⏩ geser waktu sesuai durasi
             $currentTime->addMinutes($cart->treatment->duration);
         }
 
-        // 🔥 HAPUS CART
+        // Hapus Cart
         Cart::where('user_id', $user->id)->delete();
 
-        return redirect()->route('booking.payment', $booking->id)
-            ->with('alert', [
-                'type' => 'success',
-                'title' => 'Booking Dibuat',
-                'message' => 'Silakan lanjut ke pembayaran.',
-                'context' => 'booking'
-            ]);
+        return redirect()->route('booking.payment', $booking->id);
     }
 
     /**
-     * 🔥 STEP 2
+     * 🔥 STEP 2: TAMPILKAN HALAMAN PEMBAYARAN
      */
     public function showPayment($id)
     {
@@ -134,22 +121,48 @@ class CheckoutController extends Controller
     }
 
     /**
-     * 🔥 STEP 3
+     * 🔥 STEP 3: KONFIRMASI PEMBAYARAN (SISTEM REBUTAN JADWAL)
      */
     public function confirmPayment($id)
     {
-        $booking = Booking::findOrFail($id);
+        $booking = Booking::with('items.treatment')->findOrFail($id);
 
-        // 🔥 LOGIKA PINTAR: Cek dia Lunas atau DP
+        // 🔥 CEK REBUTAN: Apakah jadwal ini sudah direbut orang lain yang bayar duluan?
+        foreach ($booking->items as $item) {
+            $start = Carbon::parse($item->scheduled_date . ' ' . $item->scheduled_time);
+            $end   = $start->copy()->addMinutes($item->treatment->duration ?? 60);
+
+            $keduluan = BookingItem::join('bookings', 'booking_items.booking_id', '=', 'bookings.id')
+                ->where('bookings.id', '!=', $booking->id) // Jangan cek diri sendiri
+                ->where('booking_items.scheduled_date', $item->scheduled_date)
+                ->whereIn('bookings.payment_status', ['paid', 'paid_dp']) // Cek yg udah bayar
+                ->where('bookings.booking_status', '!=', 'cancelled')
+                ->where(function ($query) use ($start, $end) {
+                    $query->where('booking_items.scheduled_time', '<', $end->format('H:i:s'))
+                          ->where(DB::raw("ADDTIME(booking_items.scheduled_time, SEC_TO_TIME(60 * 60))"), '>', $start->format('H:i:s'));
+                })
+                ->exists();
+
+            if ($keduluan) {
+                // Batalkan otomatis booking yang telat bayar ini
+                $booking->update(['booking_status' => 'cancelled']);
+                
+                return redirect()->route('user.bookings')->with('alert', [
+                    'type' => 'error',
+                    'title' => 'Keduluan! 😭',
+                    'message' => 'Maaf, jadwal ini baru saja dibayar oleh pelanggan lain. Silakan buat reservasi ulang di jam yang kosong ya!',
+                    'context' => 'payment_failed'
+                ]);
+            }
+        }
+
+        // JIKA AMAN, LANJUT SIMPAN PEMBAYARAN
         $isLunas = $booking->dp_amount >= $booking->total_price;
         $statusPembayaran = $isLunas ? 'paid' : 'paid_dp';
-
-        // 🔥 BIKIN PESAN DINAMIS SESUAI PILIHANNYA
         $pesanPopUp = $isLunas 
             ? 'Booking kamu sudah dikonfirmasi secara LUNAS. Terima kasih!' 
             : 'Booking kamu sudah dikonfirmasi dengan pembayaran DP (Uang Muka).';
 
-        // Simpan ke database
         $booking->payment_status = $statusPembayaran;
         $booking->booking_status = 'confirmed';
         $booking->save();
@@ -158,60 +171,19 @@ class CheckoutController extends Controller
             ->with('alert', [
                 'type' => 'success',
                 'title' => 'Pembayaran Berhasil!',
-                'message' => $pesanPopUp, // <-- Masukkan pesannya ke sini
+                'message' => $pesanPopUp,
                 'context' => 'payment'
             ]);
     }
 
     /**
-     * 🔥 MENCARI JADWAL YANG SUDAH DIBOOKING (AJAX)
-     */
-    public function getBookedSlots(Request $request)
-    {
-        $date = $request->query('date');
-        if (!$date) return response()->json([]);
-
-        // Cari semua item booking di tanggal tersebut
-        $items = BookingItem::with('treatment')
-            ->where('scheduled_date', $date)
-            ->get();
-
-        $blockedSlots = [];
-
-        foreach ($items as $item) {
-            if (!$item->treatment) continue;
-            
-            $start = Carbon::parse($item->scheduled_time);
-            $end = $start->copy()->addMinutes($item->treatment->duration);
-
-            // Cek setiap interval 30 menit (jam operasional 10:00 - 17:00)
-            $current = Carbon::parse('10:00');
-            $endOfDay = Carbon::parse('17:30');
-
-            while ($current <= $endOfDay) {
-                $slotStart = $current->copy();
-                // Jika jam ini berada di tengah-tengah jadwal orang lain, blokir!
-                if ($slotStart >= $start && $slotStart < $end) {
-                    $blockedSlots[] = $current->format('H:i');
-                }
-                $current->addMinutes(30);
-            }
-        }
-
-        // Kembalikan daftar jam yang harus diblokir ke tampilan depan
-        return response()->json(array_values(array_unique($blockedSlots)));
-    }
-
-    /**
-     * 🔥 FUNGSI USER MEMBATALKAN BOOKING (JIKA BELUM DIBAYAR)
+     * 🔥 FUNGSI USER MEMBATALKAN BOOKING SENDIRI
      */
     public function cancelBooking($id)
     {
         $booking = Booking::findOrFail($id);
 
-        // Pastikan ini punya user yang login, dan statusnya MASIH PENDING
         if ($booking->user_id == Auth::id() && $booking->payment_status == 'pending') {
-            
             $booking->update([
                 'booking_status' => 'cancelled'
             ]);
@@ -224,5 +196,45 @@ class CheckoutController extends Controller
         }
 
         return back()->with('error', 'Reservasi tidak dapat dibatalkan.');
+    }
+
+    /**
+     * 🔥 MENCARI JADWAL YANG SUDAH DIBOOKING (HANYA YANG UDAH BAYAR)
+     */
+    public function getBookedSlots(Request $request)
+    {
+        $date = $request->query('date');
+        if (!$date) return response()->json([]);
+
+        // 🔥 KUNCI: HANYA BLOKIR JAM JIKA STATUSNYA SUDAH BAYAR DAN TIDAK BATAL
+        $items = BookingItem::with('treatment')
+            ->whereHas('booking', function($query) {
+                $query->whereIn('payment_status', ['paid', 'paid_dp'])
+                      ->where('booking_status', '!=', 'cancelled');
+            })
+            ->where('scheduled_date', $date)
+            ->get();
+
+        $blockedSlots = [];
+
+        foreach ($items as $item) {
+            if (!$item->treatment) continue;
+            
+            $start = Carbon::parse($item->scheduled_time);
+            $end = $start->copy()->addMinutes($item->treatment->duration);
+
+            $current = Carbon::parse('10:00');
+            $endOfDay = Carbon::parse('17:30');
+
+            while ($current <= $endOfDay) {
+                $slotStart = $current->copy();
+                if ($slotStart >= $start && $slotStart < $end) {
+                    $blockedSlots[] = $current->format('H:i');
+                }
+                $current->addMinutes(30);
+            }
+        }
+
+        return response()->json(array_values(array_unique($blockedSlots)));
     }
 }
