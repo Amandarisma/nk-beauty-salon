@@ -59,7 +59,7 @@
                             <label class="block text-gray-700 text-sm font-bold mb-2">Tanggal (Hari Ini)</label>
                             <input type="date" name="date" class="w-full border rounded p-2 bg-gray-100 cursor-not-allowed text-gray-500" value="{{ date('Y-m-d') }}" readonly required>
                         </div>
-<div>
+                        <div>
                             <label class="block text-gray-700 text-sm font-bold mb-2">Jam Kedatangan (WIB)</label>
                             
                             <input type="hidden" name="time" id="realTime" value="{{ date('H:i') }}">
@@ -124,6 +124,14 @@
     </div>
 
     <script>
+        // 🔥 INI FUNGSI YANG HILANG TADI: Biar jam-nya kesimpan di sistem!
+        function updateTimeValue() {
+            let hour = document.getElementById('hourSelect').value;
+            let minute = document.getElementById('minuteSelect').value;
+            document.getElementById('realTime').value = hour + ':' + minute;
+        }
+
+        // Fungsi Pencarian Layanan
         document.getElementById('searchTreatment').addEventListener('keyup', function() {
             let filter = this.value.toLowerCase();
             let items = document.querySelectorAll('.treatment-item');
@@ -139,7 +147,6 @@
                 }
             });
 
-            // Tampilkan pesan kosong jika tidak ada yang cocok
             document.getElementById('noTreatmentResult').style.display = hasResult ? "none" : "block";
         });
     </script>

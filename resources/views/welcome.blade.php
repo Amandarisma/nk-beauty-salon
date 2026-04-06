@@ -13,74 +13,20 @@
     
     <style>
         .modal-open { overflow: hidden; }
-        /* Animasi smooth untuk search */
         .treatment-card { transition: all 0.3s ease; }
+        
+        /* 🔥 SIHIR POP-UP SWEETALERT SUPER ESTETIK 🔥 */
+        div:where(.swal2-container) { background: rgba(17, 24, 39, 0.5) !important; backdrop-filter: blur(4px) !important; }
+        div:where(.swal2-popup) { border-radius: 1.5rem !important; padding: 2.5rem 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; border: 1px solid #fdf2f8 !important; }
+        h2:where(.swal2-title) { font-weight: 800 !important; color: #111827 !important; font-size: 1.5rem !important; margin-bottom: 0.5rem !important; }
+        div:where(.swal2-html-container) { color: #6b7280 !important; font-size: 0.875rem !important; margin-top: 0 !important; }
+        div:where(.swal2-actions) { margin-top: 2rem !important; gap: 0.75rem !important; width: 100% !important; }
+        button:where(.swal2-confirm) { background-color: #db2777 !important; color: white !important; border-radius: 1rem !important; padding: 0.875rem 2rem !important; font-size: 0.875rem !important; font-weight: 700 !important; box-shadow: 0 4px 6px -1px rgba(252, 165, 165, 0.5) !important; transition: all 0.2s ease-in-out !important; }
+        button:where(.swal2-confirm):hover { background-color: #be185d !important; transform: translateY(-2px) !important; }
+        button:where(.swal2-cancel) { background-color: white !important; color: #6b7280 !important; border: 1px solid #e5e7eb !important; border-radius: 1rem !important; padding: 0.875rem 2rem !important; font-size: 0.875rem !important; font-weight: 700 !important; transition: all 0.2s ease-in-out !important; }
+        button:where(.swal2-cancel):hover { background-color: #f9fafb !important; color: #374151 !important; }
     </style>
 </head>
-
-<style>
-        /* Efek blur gelap di background */
-        div:where(.swal2-container) {
-            background: rgba(17, 24, 39, 0.5) !important;
-            backdrop-filter: blur(4px) !important;
-        }
-        /* Kotak pop-up membulat ala modal baru */
-        div:where(.swal2-popup) {
-            border-radius: 1.5rem !important; /* rounded-3xl */
-            padding: 2.5rem 1.5rem !important;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-            border: 1px solid #fdf2f8 !important; /* border-pink-50 */
-        }
-        /* Judul tebal dan gelap */
-        h2:where(.swal2-title) {
-            font-weight: 800 !important; /* font-extrabold */
-            color: #111827 !important; /* text-gray-900 */
-            font-size: 1.5rem !important; /* text-2xl */
-            margin-bottom: 0.5rem !important;
-        }
-        /* Teks deskripsi / detail */
-        div:where(.swal2-html-container) {
-            color: #6b7280 !important; /* text-gray-500 */
-            font-size: 0.875rem !important; /* text-sm */
-            margin-top: 0 !important;
-        }
-        /* Jarak antar tombol */
-        div:where(.swal2-actions) {
-            margin-top: 2rem !important;
-            gap: 0.75rem !important;
-            width: 100% !important;
-        }
-        /* Tombol OK / Simpan (Pink Cetar) */
-        button:where(.swal2-confirm) {
-            background-color: #db2777 !important; /* bg-pink-600 */
-            color: white !important;
-            border-radius: 1rem !important; /* rounded-2xl */
-            padding: 0.875rem 2rem !important; /* py-3.5 px-8 */
-            font-size: 0.875rem !important; /* text-sm */
-            font-weight: 700 !important; /* font-bold */
-            box-shadow: 0 4px 6px -1px rgba(252, 165, 165, 0.5) !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        button:where(.swal2-confirm):hover {
-            background-color: #be185d !important; /* hover:bg-pink-700 */
-            transform: translateY(-2px) !important;
-        }
-        /* Tombol Batal / Lanjut (Abu-abu Clean) */
-        button:where(.swal2-cancel) {
-            background-color: white !important;
-            color: #6b7280 !important; /* text-gray-500 */
-            border: 1px solid #e5e7eb !important; /* border-gray-200 */
-            border-radius: 1rem !important; /* rounded-2xl */
-            padding: 0.875rem 2rem !important; /* py-3.5 px-8 */
-            font-size: 0.875rem !important; /* text-sm */
-            font-weight: 700 !important; /* font-bold */
-            transition: all 0.2s ease-in-out !important;
-        }
-        button:where(.swal2-cancel):hover {
-            background-color: #f9fafb !important; /* hover:bg-gray-50 */
-            color: #374151 !important; /* text-gray-700 */
-        }
-    </style>
 
 <body class="antialiased bg-gray-50">
 
@@ -185,7 +131,7 @@
         </div>
     </div>
 
-<div id="bookingModal" class="hidden fixed inset-0 z-[9999] overflow-y-auto">
+    <div id="bookingModal" class="hidden fixed inset-0 z-[9999] overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity backdrop-blur-sm" onclick="closeBookingModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">​</span>

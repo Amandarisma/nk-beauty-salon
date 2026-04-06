@@ -2,9 +2,18 @@
     <div class="py-8 bg-gray-50 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            <div class="mb-6">
-                <h2 class="font-bold text-2xl text-gray-800 tracking-tight">Daftar Transaksi</h2>
-                <p class="text-sm text-gray-500">Riwayat global seluruh pembayaran dan reservasi salon yang sudah terlaksana.</p>
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="font-bold text-2xl text-gray-800 tracking-tight">Daftar Transaksi</h2>
+                    <p class="text-sm text-gray-500">Riwayat global seluruh pembayaran dan reservasi salon yang sudah terlaksana.</p>
+                </div>
+
+                <a href="{{ route('admin.transactions.pdf') }}" class="bg-red-500 text-white px-5 py-2.5 rounded-full font-bold hover:bg-red-600 shadow-md flex items-center gap-2 transition transform hover:-translate-y-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export PDF
+                </a>
             </div>
 
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\TreatmentController;
 use App\Http\Controllers\Admin\AdminOperationController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\TransactionController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -30,7 +31,7 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 //
-// 🔥 RIWAYAT RESERVASI (INI STEP 3 🔥)
+// 🔥 RIWAYAT RESERVASI
 //
 Route::get('/my-bookings', function () {
 
@@ -54,7 +55,7 @@ Route::middleware(['auth', 'admin'])
         Route::get('/dashboard', [AdminOperationController::class, 'dashboard'])
             ->name('dashboard');
 
-        Route::patch('/bookings/{id}/status', [App\Http\Controllers\Admin\AdminOperationController::class, 'updateStatus'])
+        Route::patch('/bookings/{id}/status', [AdminOperationController::class, 'updateStatus'])
             ->name('bookings.status');
 
         Route::resource('treatments', TreatmentController::class);
@@ -70,19 +71,24 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/customers', [CustomerController::class, 'index'])
             ->name('customers.index');
-        //DETAIL PELANGGAN
-        Route::get('/customers/{id}', [App\Http\Controllers\Admin\CustomerController::class, 'show'])
+            
+        // DETAIL PELANGGAN
+        Route::get('/customers/{id}', [CustomerController::class, 'show'])
             ->name('customers.show');
 
         Route::get('/inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
             
-        Route::get('/transactions', [App\Http\Controllers\Admin\TransactionController::class, 'index'])
+        // 🔥 RUTE TRANSAKSI & EXPORT PDF 🔥
+        Route::get('/transactions', [TransactionController::class, 'index'])
             ->name('transactions.index');
+            
+        Route::get('/transactions/export-pdf', [TransactionController::class, 'exportPdf'])
+            ->name('transactions.pdf');
     });
 
 //
-// 🔥 PROFILE (PINDAH KE GLOBAL AUTH 🔥)
+// 🔥 PROFILE
 //
 Route::middleware(['auth'])->group(function () {
 
@@ -106,13 +112,8 @@ Route::middleware(['auth', 'user'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
     Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
-
-    // CHECKOUT
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
-    Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
-    Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
     
-    // 🔥 RUTE BARU UNTUK BATALKAN BOOKING
+    // 🔥 RUTE UNTUK BATALKAN BOOKING
     Route::patch('/booking/cancel/{id}', [CheckoutController::class, 'cancelBooking'])->name('booking.cancel');
 });
 

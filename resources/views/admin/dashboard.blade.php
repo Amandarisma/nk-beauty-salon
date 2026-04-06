@@ -23,13 +23,13 @@
             @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div onclick="showTodayList('pending')" class="bg-pink-50 p-5 rounded-2xl shadow-sm border border-pink-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:scale-[1.01] transition transform">
+                <div onclick="showTodayList('next')" class="bg-pink-50 p-5 rounded-2xl shadow-sm border border-pink-100 flex items-center space-x-4 cursor-pointer hover:shadow-md hover:scale-[1.01] transition transform">
                     <div class="p-3 bg-white rounded-xl text-pink-500 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
                     <div>
-                        <p class="text-pink-400 text-xs font-bold uppercase tracking-wider">Antrean Menunggu</p>
-                        <p class="text-2xl font-extrabold text-pink-700">{{ $pendingBookingsToday ?? 0 }}</p>
+                        <p class="text-pink-400 text-xs font-bold uppercase tracking-wider">Antrean Selanjutnya</p>
+                        <p class="text-2xl font-extrabold text-pink-700">{{ $antreanSelanjutnya ?? 0 }}</p>
                     </div>
                 </div>
 
@@ -50,9 +50,10 @@
                         <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                             <span class="text-xl">📅</span> Jadwal Kalender
                         </h3>
-                        <div class="text-[10px] font-bold flex gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 uppercase tracking-tighter">
-                            <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-yellow-100 border border-yellow-400"></div> Menunggu</span>
-                            <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-emerald-100 border border-emerald-400"></div> Lunas/DP OK</span>
+                        <div class="text-[10px] font-bold flex flex-wrap justify-end gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 uppercase tracking-tighter">
+                            <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-yellow-100 border border-yellow-400"></div> Pending</span>
+                            <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-blue-100 border border-blue-400"></div> DP 30%</span>
+                            <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-emerald-100 border border-emerald-400"></div> Lunas</span>
                             <span class="flex items-center gap-1.5 text-gray-600"><div class="w-2.5 h-2.5 rounded-full bg-gray-100 border border-gray-400"></div> Selesai</span>
                         </div>
                     </div>
@@ -83,6 +84,8 @@
         .fc-list { border: none !important; }
         .fc-list-day-cushion { background-color: #fdf2f8 !important; color: #db2777 !important; font-weight: 800 !important; padding: 8px 12px !important; }
         .fc-list-event td { padding: 10px !important; border-bottom: 1px solid #f9fafb !important; cursor: pointer; }
+        .fc-h-event { border: none !important; }
+        .fc-event-main { font-weight: 700 !important; }
     </style>
 
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
@@ -113,18 +116,30 @@
             });
             calendar.render();
 
-window.showDetail = function(event) {
+            window.showDetail = function(event) {
                 const props = event.extendedProps;
                 
-                // 🔥 LOGIKA BARU: Jika statusnya masih menunggu (belum selesai/batal), tampilkan tombol Aksi
+                let statusBadge = '';
+                if (props.booking_status === 'completed' || props.booking_status === 'cancelled') {
+                    statusBadge = `<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase">${props.booking_status}</span>`;
+                } else if (props.payment_status === 'paid') {
+                    statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">LUNAS</span>';
+                } else if (props.payment_status === 'paid_dp') {
+                    statusBadge = '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">DP 30%</span>';
+                } else {
+                    statusBadge = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">BELUM BAYAR</span>';
+                }
+
+                let warnaSisa = (props.sisa == '0' || props.sisa == 0) ? 'text-emerald-500' : 'text-pink-600';
+                
                 let actionButtons = '';
                 if (props.is_waiting) {
                     actionButtons = `
-                        <div class="flex gap-2 mt-5 pt-4 border-t border-gray-100 justify-center">
+                        <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100 justify-center">
                             <button onclick="processAction(${event.id}, 'completed', 'Selesaikan layanan ini?')" class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl hover:bg-emerald-500 hover:text-white transition text-sm font-bold w-full">
                                 Selesai
                             </button>
-                            <button onclick="processAction(${event.id}, 'cancelled', 'Batalkan booking ini? Slot di kalender akan kembali kosong dan bisa dibooking orang lain.')" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition text-sm font-bold w-full">
+                            <button onclick="processAction(${event.id}, 'cancelled', 'Batalkan booking ini? Slot di kalender akan kembali kosong.')" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl hover:bg-red-500 hover:text-white transition text-sm font-bold w-full">
                                 Batalkan
                             </button>
                         </div>
@@ -135,15 +150,36 @@ window.showDetail = function(event) {
                     title: 'Detail Booking',
                     html: `
                         <div class="text-left mt-2">
-                            <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100 mb-4 text-center shadow-inner">
-                                <p class="text-xs text-pink-500 uppercase font-bold tracking-wider mb-1">Pelanggan</p>
+                            <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100 mb-4 shadow-inner">
+                                <div class="flex justify-between items-center mb-2">
+                                    <p class="text-xs text-pink-500 uppercase font-bold tracking-wider">Pelanggan</p>
+                                    ${statusBadge}
+                                </div>
                                 <p class="text-xl font-bold text-gray-800">${event.title}</p>
                                 <p class="text-sm text-gray-500 mt-1">${props.waktu_lengkap}</p>
                             </div>
-                            <div class="mb-2 px-2">
+                            
+                            <div class="mb-4 px-2">
                                 <p class="font-bold text-gray-700 border-b border-gray-200 pb-1 text-xs uppercase mb-2">Layanan yang dipilih:</p>
-                                <div class="text-gray-600 text-sm leading-relaxed">${props.layanan}</div>
+                                <div class="text-gray-600 text-sm leading-relaxed font-medium">${props.layanan}</div>
                             </div>
+
+                            <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm mb-2">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 border-b border-gray-100 pb-2">Rincian Pembayaran</p>
+                                <div class="flex justify-between text-xs text-gray-600 mb-1 font-medium">
+                                    <span>Total Biaya Layanan:</span>
+                                    <span>Rp ${props.total_asli}</span>
+                                </div>
+                                <div class="flex justify-between text-xs text-emerald-600 font-bold mb-2 border-b border-gray-100 pb-2">
+                                    <span>Sudah Dibayar:</span>
+                                    <span>- Rp ${props.sudah_dp}</span>
+                                </div>
+                                <div class="flex justify-between font-black text-lg ${warnaSisa}">
+                                    <span>Sisa Tagihan:</span>
+                                    <span>Rp ${props.sisa}</span>
+                                </div>
+                            </div>
+
                             ${actionButtons}
                         </div>
                     `,
@@ -153,15 +189,22 @@ window.showDetail = function(event) {
                 });
             };
 
-            // 🔥 FUNGSI KLIK CARD
-// 🔥 FUNGSI KLIK CARD
             window.showTodayList = function(type) {
+                // 🔥 LOGIKA BARU: Ambil jam sekarang buat difilter di Javascript
+                const now = new Date();
+                const currentHour = String(now.getHours()).padStart(2, '0');
+                const currentMinute = String(now.getMinutes()).padStart(2, '0');
+                const currentTime = currentHour + ':' + currentMinute;
+
                 const filtered = eventsData.filter(ev => {
                     const evDate = ev.start.split('T')[0];
                     if (evDate !== serverToday) return false; 
                     
-                    // 🔥 PERBAIKAN LOGIKA: Sekarang pop-up membaca dari "is_waiting", bukan dari warna.
-                    if (type === 'pending') return ev.is_waiting === true;
+                    // 🔥 Hanya tampilkan yang jamnya lebih besar atau sama dengan sekarang
+                    if (type === 'next') {
+                        const evTime = ev.start.split('T')[1].substring(0, 5);
+                        return ev.is_waiting === true && evTime >= currentTime;
+                    }
                     
                     return true;
                 });
@@ -170,7 +213,7 @@ window.showDetail = function(event) {
                     Swal.fire({
                         icon: 'info',
                         title: 'Kosong',
-                        text: 'Tidak ada data ' + (type === 'pending' ? 'menunggu' : 'booking') + ' untuk hari ini.',
+                        text: 'Tidak ada data ' + (type === 'next' ? 'antrean selanjutnya' : 'booking') + ' untuk hari ini.',
                         customClass: { popup: 'rounded-2xl' }
                     });
                     return;
@@ -185,14 +228,13 @@ window.showDetail = function(event) {
                                 <p class="text-[10px] font-bold text-pink-500 uppercase">${ev.start.split('T')[1].substring(0,5)} WIB</p>
                             </div>`;
                     
-                    // 🔥 LOGIKA BARU: Tombol HANYA muncul di Card "Menunggu"
-                    if (type === 'pending') {
+                    if (type === 'next') {
                         listHtml += `
                             <div class="flex gap-2">
                                 <button onclick="processAction(${ev.id}, 'completed', 'Selesaikan layanan ini?')" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl hover:bg-emerald-500 hover:text-white transition text-xs font-bold" title="Selesai">
                                     Selesai
                                 </button>
-                                <button onclick="processAction(${ev.id}, 'cancelled', 'Batalkan booking ini? Pelanggan akan melihat status dibatalkan oleh pihak salon.')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold" title="Batalkan">
+                                <button onclick="processAction(${ev.id}, 'cancelled', 'Batalkan booking ini? Pelanggan akan melihat status dibatalkan.')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold" title="Batalkan">
                                     Batalkan
                                 </button>
                             </div>`;
@@ -203,7 +245,7 @@ window.showDetail = function(event) {
                 listHtml += `</div>`;
 
                 Swal.fire({
-                    title: type === 'pending' ? 'Antrean Menunggu' : 'Semua Agenda Hari Ini',
+                    title: type === 'next' ? 'Antrean Selanjutnya' : 'Semua Agenda Hari Ini',
                     html: listHtml,
                     showConfirmButton: false,
                     showCloseButton: true,
@@ -211,7 +253,6 @@ window.showDetail = function(event) {
                 });
             };
 
-            // 🔥 FUNGSI PEMICU DATABASE
             window.processAction = function(id, status, message) {
                 Swal.fire({
                     title: 'Konfirmasi',
@@ -225,7 +266,6 @@ window.showDetail = function(event) {
                     customClass: { popup: 'rounded-3xl' }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Jalankan form tersembunyi
                         let form = document.getElementById('status-form');
                         form.action = "{{ url('admin/bookings') }}/" + id + "/status";
                         document.getElementById('status-input').value = status;
