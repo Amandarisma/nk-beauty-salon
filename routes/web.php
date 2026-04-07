@@ -117,4 +117,17 @@ Route::middleware(['auth', 'user'])->group(function () {
     Route::patch('/booking/cancel/{id}', [CheckoutController::class, 'cancelBooking'])->name('booking.cancel');
 });
 
+use Illuminate\Support\Facades\Artisan;
+
+Route::get('/jalankan-migrasi', function () {
+    try {
+        Artisan::call('migrate:fresh', [
+            '--seed' => true,
+            '--force' => true
+        ]);
+        return 'YEEEAAAY! Database TiDB Berhasil Diisi oleh Vercel! 🎉';
+    } catch (\Exception $e) {
+        return 'Yahh Gagal: ' . $e->getMessage();
+    }
+});
 require __DIR__.'/auth.php';
