@@ -119,6 +119,15 @@
             window.showDetail = function(event) {
                 const props = event.extendedProps;
                 
+                // 1. FALLBACK DATA (Mencegah Undefined)
+                let namaLayanan = props.layanan || 'Tidak ada layanan tercatat';
+                let totalAsliText = props.total_asli || '0';
+                let sudahDpText = props.sudah_dp || '0';
+                let sisaText = props.sisa || '0';
+                
+                // Ambil angka mentah untuk logika perhitungan Lunas (dari Controller baru)
+                let sisaRaw = parseFloat(props.sisa_raw) || 0;
+
                 let statusBadge = '';
                 if (props.booking_status === 'completed' || props.booking_status === 'cancelled') {
                     statusBadge = `<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase">${props.booking_status}</span>`;
@@ -130,7 +139,17 @@
                     statusBadge = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">BELUM BAYAR</span>';
                 }
 
-                let warnaSisa = (props.sisa == '0' || props.sisa == 0) ? 'text-emerald-500' : 'text-pink-600';
+                // 2. LOGIKA TAMPILAN LUNAS vs BELUM LUNAS
+                let textSisaTagihan = '';
+                let warnaSisa = '';
+
+                if (sisaRaw <= 0) {
+                    textSisaTagihan = 'Rp 0 (LUNAS)';
+                    warnaSisa = 'text-emerald-500'; // Warna hijau jika lunas
+                } else {
+                    textSisaTagihan = `Rp ${sisaText}`;
+                    warnaSisa = 'text-pink-600'; // Warna pink jika belum lunas
+                }
                 
                 let actionButtons = '';
                 if (props.is_waiting) {
@@ -156,27 +175,27 @@
                                     ${statusBadge}
                                 </div>
                                 <p class="text-xl font-bold text-gray-800">${event.title}</p>
-                                <p class="text-sm text-gray-500 mt-1">${props.waktu_lengkap}</p>
+                                <p class="text-sm text-gray-500 mt-1">${props.waktu_lengkap || 'Waktu tidak tersedia'}</p>
                             </div>
                             
                             <div class="mb-4 px-2">
                                 <p class="font-bold text-gray-700 border-b border-gray-200 pb-1 text-xs uppercase mb-2">Layanan yang dipilih:</p>
-                                <div class="text-gray-600 text-sm leading-relaxed font-medium">${props.layanan}</div>
+                                <div class="text-gray-600 text-sm leading-relaxed font-medium">${namaLayanan}</div>
                             </div>
 
                             <div class="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm mb-2">
                                 <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 border-b border-gray-100 pb-2">Rincian Pembayaran</p>
                                 <div class="flex justify-between text-xs text-gray-600 mb-1 font-medium">
                                     <span>Total Biaya Layanan:</span>
-                                    <span>Rp ${props.total_asli}</span>
+                                    <span>Rp ${totalAsliText}</span>
                                 </div>
                                 <div class="flex justify-between text-xs text-emerald-600 font-bold mb-2 border-b border-gray-100 pb-2">
                                     <span>Sudah Dibayar:</span>
-                                    <span>- Rp ${props.sudah_dp}</span>
+                                    <span>- Rp ${sudahDpText}</span>
                                 </div>
                                 <div class="flex justify-between font-black text-lg ${warnaSisa}">
                                     <span>Sisa Tagihan:</span>
-                                    <span>Rp ${props.sisa}</span>
+                                    <span>${textSisaTagihan}</span>
                                 </div>
                             </div>
 
@@ -190,7 +209,7 @@
             };
 
             window.showTodayList = function(type) {
-                // 🔥 LOGIKA BARU: Ambil jam sekarang buat difilter di Javascript
+                // ... (Fungsi showTodayList tetap sama seperti aslimu) ...
                 const now = new Date();
                 const currentHour = String(now.getHours()).padStart(2, '0');
                 const currentMinute = String(now.getMinutes()).padStart(2, '0');
@@ -200,10 +219,9 @@
                     const evDate = ev.start.split('T')[0];
                     if (evDate !== serverToday) return false; 
                     
-                    // 🔥 Hanya tampilkan yang jamnya lebih besar atau sama dengan sekarang
                     if (type === 'next') {
                         const evTime = ev.start.split('T')[1].substring(0, 5);
-                        return ev.is_waiting === true && evTime >= currentTime;
+                        return ev.extendedProps.is_waiting === true && evTime >= currentTime;
                     }
                     
                     return true;
