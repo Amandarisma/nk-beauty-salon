@@ -87,6 +87,13 @@ class DashboardController extends Controller
                     'layanan' => $treatmentList,
                     'payment_status' => $booking->payment_status,
                     'booking_status' => $booking->booking_status,
+                    
+                    // 🔥 PERBAIKAN: Tambahan variabel mentah (angka asli) untuk dibaca oleh JavaScript (File Blade)
+                    'total_asli_raw' => $totalAsli,
+                    'sudah_dp_raw' => $sudahDp,
+                    'sisa_raw' => $sisaPelunasan,
+                    
+                    // Format Rupiah untuk langsung ditampilkan sebagai teks
                     'total_asli' => number_format($totalAsli, 0, ',', '.'),
                     'sudah_dp' => number_format($sudahDp, 0, ',', '.'),
                     'sisa' => number_format($sisaPelunasan, 0, ',', '.')
@@ -94,7 +101,6 @@ class DashboardController extends Controller
             }
         }
 
-        // 🔥 Bawa data $antreanSelanjutnya ke tampilan
         return view('admin.dashboard', compact('totalBookingsToday', 'antreanSelanjutnya', 'events'));
     }
 
