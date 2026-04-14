@@ -1,120 +1,197 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
+namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Controller;
+use App\Models\Booking;
+use App\Models\Treatment;
+use App\Models\User;
+use App\Models\BookingItem;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
-use App\Http\Controllers\Admin\TreatmentController;
-use App\Http\Controllers\Admin\AdminOperationController;
-use App\Http\Controllers\Admin\CustomerController;
-use App\Http\Controllers\Admin\InventoryController;
-use App\Http\Controllers\Admin\TransactionController;
+class AdminOperationController extends Controller
+{
+    public function dashboard()
+    {
+        $today = Carbon::today();
+        $nowTime = Carbon::now()->format('H:i:s');
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+        $totalBookingsToday = Booking::whereDate('booking_date', $today)->count();
 
-//
-// 🔥 API
-//
-Route::get('/api/booked-slots', [CheckoutController::class, 'getBookedSlots']);
-Route::get('/cart/total-duration/data', [CartController::class, 'getTotalDuration'])->middleware('auth');
-Route::post('/cart/update-schedule', [CartController::class, 'updateSchedule'])->middleware('auth');
+        $antreanSelanjutnya = Booking::whereDate('booking_date', $today)
+            ->whereNotIn('booking_status', ['completed', 'cancelled'])
+            ->whereTime('start_time', '>=', $nowTime)
+            ->count();
 
-//
-// 🔥 DASHBOARD (BERANDA)
-//
-Route::get('/dashboard', function () {
-    return redirect()->route('home');
-})->name('dashboard');
-
-//
-// 🔥 RIWAYAT RESERVASI
-//
-Route::get('/my-bookings', function () {
-
-    $bookings = App\Models\Booking::with('items.treatment')
-        ->where('user_id', Auth::id())
-        ->latest()
-        ->get();
-
-    return view('user.bookings', compact('bookings'));
-
-})->middleware(['auth'])->name('user.bookings');
-
-//
-// 🔥 ADMIN
-//
-Route::middleware(['auth', 'admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-
-        Route::get('/dashboard', [AdminOperationController::class, 'dashboard'])
-            ->name('dashboard');
-
-        Route::patch('/bookings/{id}/status', [AdminOperationController::class, 'updateStatus'])
-            ->name('bookings.status');
-
-        Route::resource('treatments', TreatmentController::class);
-
-        Route::get('/pos', [AdminOperationController::class, 'createWalkIn'])
-            ->name('pos.create');
-
-        Route::post('/pos', [AdminOperationController::class, 'storeWalkIn'])
-            ->name('pos.store');
-
-        Route::get('/invoice/{id}', [AdminOperationController::class, 'invoice'])
-            ->name('invoice');
-
-        Route::get('/customers', [CustomerController::class, 'index'])
-            ->name('customers.index');
+        $bookings = Booking::with(['user', 'items.treatment'])
+            ->where('booking_status', '!=', 'cancelled')
+            ->get();
             
-        // DETAIL PELANGGAN
-        Route::get('/customers/{id}', [CustomerController::class, 'show'])
-            ->name('customers.show');
+        $events = [];
 
-        Route::get('/inventory', [InventoryController::class, 'index'])
-            ->name('inventory.index');
-            
-        // 🔥 RUTE TRANSAKSI & EXPORT PDF 🔥
-        Route::get('/transactions', [TransactionController::class, 'index'])
-            ->name('transactions.index');
-            
-        Route::get('/transactions/export-pdf', [TransactionController::class, 'exportPdf'])
-            ->name('transactions.pdf');
-    });
+        foreach($bookings as $booking) {
+            $firstItem = $booking->items->first();
 
-//
-// 🔥 PROFILE
-//
-Route::middleware(['auth'])->group(function () {
+            if($firstItem) {
+                $eventDateTime = Carbon::parse($firstItem->scheduled_date . ' ' . $firstItem->scheduled_time);
+                
+                $totalAsli = $booking->total_price;
+                
+                // 🔥 LOGIKA DP: Otomatis potong 30% jika DB kosong
+                if ($booking->payment_status == 'paid') {
+                    $sudahDp = $totalAsli; 
+                } elseif ($booking->payment_status == 'paid_dp') {
+                    $sudahDp = ($booking->dp_amount > 0) ? $booking->dp_amount : ($totalAsli * 0.3);
+                } else {
+                    $sudahDp = $booking->dp_amount ?? 0;
+                }
+                
+                $sisaPelunasan = max(0, $totalAsli - $sudahDp); 
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+                $isPastDay = Carbon::parse($firstItem->scheduled_date)->isBefore(Carbon::today());
 
-});
+                if ($booking->booking_status == 'completed' || $isPastDay) {
+                    $bgColor = '#f3f4f6'; $borderColor = '#e5e7eb'; $textColor = '#6b7280'; 
+                } elseif ($booking->payment_status == 'paid') {
+                    $bgColor = '#d1fae5'; $borderColor = '#a7f3d0'; $textColor = '#065f46'; 
+                } elseif ($booking->payment_status == 'paid_dp') {
+                    $bgColor = '#dbeafe'; $borderColor = '#bfdbfe'; $textColor = '#1e40af'; 
+                } else {
+                    $bgColor = '#fef3c7'; $borderColor = '#fde68a'; $textColor = '#92400e'; 
+                }
 
-//
-// 🔥 USER
-//
-Route::middleware(['auth', 'user'])->group(function () {
+                $isWalkIn = strpos($booking->invoice_code, 'WIN-') !== false;
+                $customerName = $booking->user ? $booking->user->name : 'Tamu';
+                if ($isWalkIn) $customerName .= ' (Walk-in)';
 
-    // CART
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
-    Route::delete('/cart/{id}', [CartController::class, 'destroy'])->name('cart.destroy');
+                // 🔥 LAYANAN
+                $treatmentList = $booking->items->map(function($item) {
+                    $nama = $item->treatment?->name ?? $item->treatment?->nama_layanan ?? 'Layanan Salon';
+                    return '• ' . $nama;
+                })->implode('<br>');
 
-    // CHECKOUT
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
-    Route::get('/booking/payment/{id}', [CheckoutController::class, 'showPayment'])->name('booking.payment');
-    Route::post('/booking/pay/{id}', [CheckoutController::class, 'confirmPayment'])->name('booking.pay');
-    
-    // 🔥 RUTE UNTUK BATALKAN BOOKING
-    Route::patch('/booking/cancel/{id}', [CheckoutController::class, 'cancelBooking'])->name('booking.cancel');
-});
+                $formattedTime = $eventDateTime->translatedFormat('d M Y') . ' - ' . $eventDateTime->format('H:i') . ' WIB';
 
-require __DIR__.'/auth.php';
+                $isWaiting = !in_array($booking->booking_status, ['completed', 'cancelled']);
+
+                $events[] = [
+                    'id' => $booking->id,
+                    'title' => $customerName,
+                    'start' => $firstItem->scheduled_date . 'T' . $firstItem->scheduled_time,
+                    'backgroundColor' => $bgColor,
+                    'borderColor' => $borderColor,
+                    'textColor' => $textColor,
+                    'is_waiting' => $isWaiting, 
+                    'waktu_lengkap' => $formattedTime,
+                    'layanan' => $treatmentList,
+                    'payment_status' => $booking->payment_status,
+                    'booking_status' => $booking->booking_status,
+                    
+                    'total_asli_raw' => $totalAsli,
+                    'sudah_dp_raw' => $sudahDp,
+                    'sisa_raw' => $sisaPelunasan,
+                    
+                    'total_asli' => number_format($totalAsli, 0, ',', '.'),
+                    'sudah_dp' => number_format($sudahDp, 0, ',', '.'),
+                    'sisa' => number_format($sisaPelunasan, 0, ',', '.')
+                ];
+            }
+        }
+
+        return view('admin.dashboard', compact('totalBookingsToday', 'antreanSelanjutnya', 'events'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        $booking->booking_status = $request->status; 
+        $booking->save();
+
+        $pesan = $request->status == 'completed' 
+            ? 'Booking berhasil diselesaikan!' 
+            : 'Booking telah dibatalkan.';
+
+        return back()->with('success', $pesan);
+    }
+
+    public function createWalkIn()
+    {
+        $treatments = Treatment::all();
+        $users = User::where('role', 'user')->get(); 
+        return view('admin.pos.create', compact('treatments', 'users'));
+    }
+
+    public function storeWalkIn(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'time' => 'required',
+            'treatment_ids' => 'required|array', 
+            'treatment_ids.*' => 'exists:treatments,id',
+        ]);
+
+        return DB::transaction(function () use ($request) {
+            $treatments = Treatment::whereIn('id', $request->treatment_ids)->get();
+            $totalPrice = $treatments->sum('price');
+            $totalDuration = $treatments->sum('duration');
+
+            $startTime = Carbon::parse($request->date . ' ' . $request->time);
+            $endTime = $startTime->copy()->addMinutes($totalDuration);
+
+            if ($request->filled('user_id')) {
+                $customer = User::findOrFail($request->user_id);
+            } else {
+                $request->validate([
+                    'guest_name' => 'required|string',
+                    'phone' => 'required|string',
+                ]);
+
+                $name = ucfirst(strtolower(trim($request->guest_name)));
+                $phone = preg_replace('/[^0-9]/', '', $request->phone);
+                if (substr($phone, 0, 1) == '0') { $phone = '62' . substr($phone, 1); }
+
+                $customer = User::where('phone', $phone)->first() ?? User::create([
+                    'name' => $name,
+                    'phone' => $phone,
+                    'email' => $phone . '@walkin.local',
+                    'role' => 'user',
+                    'password' => bcrypt(uniqid()),
+                ]);
+            }
+
+            $booking = Booking::create([
+                'invoice_code' => 'WIN-' . now()->format('YmdHis'),
+                'user_id' => $customer->id,
+                'booking_date' => $request->date,
+                'start_time' => $startTime->format('H:i:s'),
+                'end_time' => $endTime->format('H:i:s'),
+                'total_price' => $totalPrice, 
+                'dp_amount' => 0,
+                'payment_status' => 'paid',
+                'booking_status' => 'confirmed',
+            ]);
+
+            $currentTime = $startTime->copy();
+            foreach ($treatments as $treatment) {
+                BookingItem::create([
+                    'booking_id' => $booking->id,
+                    'treatment_id' => $treatment->id,
+                    'scheduled_date' => $request->date,
+                    'scheduled_time' => $currentTime->format('H:i:s'),
+                    'price_at_booking' => $treatment->price
+                ]);
+                $currentTime->addMinutes($treatment->duration);
+            }
+
+            return redirect()->route('admin.invoice', $booking->id);
+        });
+    }
+
+    public function invoice($id)
+    {
+        $booking = Booking::with('items.treatment')->findOrFail($id);
+        return view('admin.invoice.show', compact('booking'));
+    }
+}
