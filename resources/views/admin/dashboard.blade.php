@@ -119,38 +119,49 @@
             window.showDetail = function(event) {
                 const props = event.extendedProps;
                 
-                // 1. FALLBACK DATA (Mencegah Undefined)
-                let namaLayanan = props.layanan || 'Tidak ada layanan tercatat';
+                // 1. AMBIL ANGKA ASLI (Abaikan teks yang salah dari server)
                 let totalAsliText = props.total_asli || '0';
-                let sudahDpText = props.sudah_dp || '0';
-                let sisaText = props.sisa || '0';
-                
-                // Ambil angka mentah untuk logika perhitungan Lunas (dari Controller baru)
-                let sisaRaw = parseFloat(props.sisa_raw) || 0;
+                // Ubah teks Rp 45.000 jadi angka 45000 untuk dihitung ulang
+                let totalRaw = props.total_asli_raw !== undefined ? props.total_asli_raw : parseFloat(totalAsliText.toString().replace(/[^0-9]/g, '')) || 0;
+                let dpRaw = props.sudah_dp_raw !== undefined ? props.sudah_dp_raw : parseFloat((props.sudah_dp || '0').toString().replace(/[^0-9]/g, '')) || 0;
 
+                // 🔥 2. LOGIKA BACKUP FRONTEND (Memaksa hitung 30% jika DB/Cache ngaco)
+                if ((props.payment_status === 'paid_dp' || props.payment_status === 'dp') && dpRaw === 0) {
+                    dpRaw = totalRaw * 0.3; 
+                } else if (props.payment_status === 'paid') {
+                    dpRaw = totalRaw;
+                }
+
+                // Hitung ulang Sisa
+                let sisaRaw = totalRaw - dpRaw;
+                
+                // Kembalikan ke format Rupiah
+                let sudahDpText = dpRaw.toLocaleString('id-ID');
+                let sisaText = sisaRaw.toLocaleString('id-ID');
+
+                // 3. TAMPILAN BADGE
                 let statusBadge = '';
                 if (props.booking_status === 'completed' || props.booking_status === 'cancelled') {
                     statusBadge = `<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase">${props.booking_status}</span>`;
                 } else if (props.payment_status === 'paid') {
                     statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">LUNAS</span>';
-                } else if (props.payment_status === 'paid_dp') {
+                } else if (props.payment_status === 'paid_dp' || props.payment_status === 'dp') {
                     statusBadge = '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">DP 30%</span>';
                 } else {
                     statusBadge = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">BELUM BAYAR</span>';
                 }
 
-                // 2. LOGIKA TAMPILAN LUNAS vs BELUM LUNAS
-                let textSisaTagihan = '';
-                let warnaSisa = '';
+                // 4. LOGIKA LUNAS vs BELUM LUNAS
+                let textSisaTagihan = sisaRaw <= 0 ? 'Rp 0 (LUNAS)' : `Rp ${sisaText}`;
+                let warnaSisa = sisaRaw <= 0 ? 'text-emerald-500' : 'text-pink-600';
 
-                if (sisaRaw <= 0) {
-                    textSisaTagihan = 'Rp 0 (LUNAS)';
-                    warnaSisa = 'text-emerald-500'; // Warna hijau jika lunas
-                } else {
-                    textSisaTagihan = `Rp ${sisaText}`;
-                    warnaSisa = 'text-pink-600'; // Warna pink jika belum lunas
+                // 5. LAYANAN
+                // Jika cache server masih nyangkut, akan muncul tulisan merah
+                let namaLayanan = props.layanan || props.nama_layanan;
+                if (!namaLayanan || namaLayanan.trim() === '') {
+                    namaLayanan = '<span class="text-red-500 text-xs font-semibold">Terdapat cache, silakan buka link hapus cache.</span>';
                 }
-                
+
                 let actionButtons = '';
                 if (props.is_waiting) {
                     actionButtons = `
@@ -209,7 +220,7 @@
             };
 
             window.showTodayList = function(type) {
-                // ... (Fungsi showTodayList tetap sama seperti aslimu) ...
+                // ... Fungsi list hari ini biarkan utuh
                 const now = new Date();
                 const currentHour = String(now.getHours()).padStart(2, '0');
                 const currentMinute = String(now.getMinutes()).padStart(2, '0');
@@ -223,7 +234,6 @@
                         const evTime = ev.start.split('T')[1].substring(0, 5);
                         return ev.extendedProps.is_waiting === true && evTime >= currentTime;
                     }
-                    
                     return true;
                 });
 
@@ -249,15 +259,14 @@
                     if (type === 'next') {
                         listHtml += `
                             <div class="flex gap-2">
-                                <button onclick="processAction(${ev.id}, 'completed', 'Selesaikan layanan ini?')" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl hover:bg-emerald-500 hover:text-white transition text-xs font-bold" title="Selesai">
+                                <button onclick="processAction(${ev.id}, 'completed', 'Selesaikan layanan ini?')" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl hover:bg-emerald-500 hover:text-white transition text-xs font-bold">
                                     Selesai
                                 </button>
-                                <button onclick="processAction(${ev.id}, 'cancelled', 'Batalkan booking ini? Pelanggan akan melihat status dibatalkan.')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold" title="Batalkan">
+                                <button onclick="processAction(${ev.id}, 'cancelled', 'Batalkan booking ini?')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold">
                                     Batalkan
                                 </button>
                             </div>`;
                     }
-                    
                     listHtml += `</div>`;
                 });
                 listHtml += `</div>`;
