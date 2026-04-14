@@ -16,19 +16,15 @@ class DashboardController extends Controller
     public function dashboard()
     {
         $today = Carbon::today();
-        // 🔥 LOGIKA BARU: Ambil jam saat ini di server
         $nowTime = Carbon::now()->format('H:i:s');
 
-        // 1. Total Booking Hari Ini
         $totalBookingsToday = Booking::whereDate('booking_date', $today)->count();
 
-        // 🔥 2. Hitung ANTREAN SELANJUTNYA (Belum selesai, belum batal, dan Jam BElUM LEWAT)
         $antreanSelanjutnya = Booking::whereDate('booking_date', $today)
             ->whereNotIn('booking_status', ['completed', 'cancelled'])
             ->whereTime('start_time', '>=', $nowTime)
             ->count();
 
-        // 3. Ambil Data Kalender
         $bookings = Booking::with(['user', 'items.treatment'])
             ->where('booking_status', '!=', 'cancelled')
             ->get();
@@ -43,13 +39,16 @@ class DashboardController extends Controller
                 
                 $totalAsli = $booking->total_price;
                 
+                // 🔥 PERBAIKAN LOGIKA DP: Otomatis potong 30% jika DB kosong
                 if ($booking->payment_status == 'paid') {
                     $sudahDp = $totalAsli; 
+                } elseif ($booking->payment_status == 'paid_dp') {
+                    $sudahDp = ($booking->dp_amount > 0) ? $booking->dp_amount : ($totalAsli * 0.3);
                 } else {
                     $sudahDp = $booking->dp_amount ?? 0;
                 }
                 
-                $sisaPelunasan = $totalAsli - $sudahDp;
+                $sisaPelunasan = max(0, $totalAsli - $sudahDp); // max(0, ...) mencegah hasil minus
 
                 $isPastDay = Carbon::parse($firstItem->scheduled_date)->isBefore(Carbon::today());
 
@@ -67,8 +66,10 @@ class DashboardController extends Controller
                 $customerName = $booking->user ? $booking->user->name : 'Tamu';
                 if ($isWalkIn) $customerName .= ' (Walk-in)';
 
+                // 🔥 PERBAIKAN LAYANAN KOSONG: Deteksi name, nama_layanan, atau fallback text
                 $treatmentList = $booking->items->map(function($item) {
-                    return '• ' . ($item->treatment->name ?? 'Layanan');
+                    $nama = $item->treatment?->name ?? $item->treatment?->nama_layanan ?? 'Layanan Salon';
+                    return '• ' . $nama;
                 })->implode('<br>');
 
                 $formattedTime = $eventDateTime->translatedFormat('d M Y') . ' - ' . $eventDateTime->format('H:i') . ' WIB';
@@ -88,12 +89,10 @@ class DashboardController extends Controller
                     'payment_status' => $booking->payment_status,
                     'booking_status' => $booking->booking_status,
                     
-                    // 🔥 PERBAIKAN: Tambahan variabel mentah (angka asli) untuk dibaca oleh JavaScript (File Blade)
                     'total_asli_raw' => $totalAsli,
                     'sudah_dp_raw' => $sudahDp,
                     'sisa_raw' => $sisaPelunasan,
                     
-                    // Format Rupiah untuk langsung ditampilkan sebagai teks
                     'total_asli' => number_format($totalAsli, 0, ',', '.'),
                     'sudah_dp' => number_format($sudahDp, 0, ',', '.'),
                     'sisa' => number_format($sisaPelunasan, 0, ',', '.')
