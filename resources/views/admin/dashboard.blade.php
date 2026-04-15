@@ -93,11 +93,14 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const eventsData = @json($events ?? []);
-            const calendarEl = document.getElementById('calendar');
-            const serverToday = '{{ \Carbon\Carbon::today()->format("Y-m-d") }}';
+            var calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
 
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+            // Menggunakan json_encode agar format JSON 100% aman dan tidak crash
+            var eventsData = {!! json_encode($events ?? []) !!};
+            var serverToday = '{{ \Carbon\Carbon::today()->format("Y-m-d") }}';
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'id',
                 contentHeight: 480,
@@ -117,26 +120,17 @@
             calendar.render();
 
             window.showDetail = function(event) {
-                const props = event.extendedProps;
+                var props = event.extendedProps;
                 
-                let totalAsliText = props.total_asli || '0';
-                let totalRaw = props.total_asli_raw !== undefined ? props.total_asli_raw : parseFloat(totalAsliText.toString().replace(/[^0-9]/g, '')) || 0;
-                let dpRaw = props.sudah_dp_raw !== undefined ? props.sudah_dp_raw : parseFloat((props.sudah_dp || '0').toString().replace(/[^0-9]/g, '')) || 0;
+                var namaLayanan = props.layanan || 'Layanan Tercatat';
+                var totalAsliText = props.total_asli || '0';
+                var sudahDpText = props.sudah_dp || '0';
+                var sisaText = props.sisa || '0';
+                var sisaRaw = parseFloat(props.sisa_raw) || 0;
 
-                // Logika Hitung DP Otomatis
-                if ((props.payment_status === 'paid_dp' || props.payment_status === 'dp') && dpRaw === 0) {
-                    dpRaw = totalRaw * 0.3; 
-                } else if (props.payment_status === 'paid') {
-                    dpRaw = totalRaw;
-                }
-
-                let sisaRaw = totalRaw - dpRaw;
-                let sudahDpText = dpRaw.toLocaleString('id-ID');
-                let sisaText = sisaRaw.toLocaleString('id-ID');
-
-                let statusBadge = '';
+                var statusBadge = '';
                 if (props.booking_status === 'completed' || props.booking_status === 'cancelled') {
-                    statusBadge = `<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase">${props.booking_status}</span>`;
+                    statusBadge = '<span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide uppercase">' + props.booking_status + '</span>';
                 } else if (props.payment_status === 'paid') {
                     statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">LUNAS</span>';
                 } else if (props.payment_status === 'paid_dp' || props.payment_status === 'dp') {
@@ -145,16 +139,10 @@
                     statusBadge = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wide">BELUM BAYAR</span>';
                 }
 
-                let textSisaTagihan = sisaRaw <= 0 ? 'Rp 0 (LUNAS)' : `Rp ${sisaText}`;
-                let warnaSisa = sisaRaw <= 0 ? 'text-emerald-500' : 'text-pink-600';
+                var textSisaTagihan = sisaRaw <= 0 ? 'Rp 0 (LUNAS)' : 'Rp ' + sisaText;
+                var warnaSisa = sisaRaw <= 0 ? 'text-emerald-500' : 'text-pink-600';
 
-                // 🔥 LOGIKA LAYANAN DIPERBAIKI (Aman & Tidak Ada Tulisan Merah)
-                let namaLayanan = props.layanan || props.nama_layanan;
-                if (!namaLayanan || namaLayanan === 'undefined' || String(namaLayanan).trim() === '') {
-                    namaLayanan = 'Layanan Tercatat'; // Teks rapi jika data terlambat dimuat
-                }
-
-                let actionButtons = '';
+                var actionButtons = '';
                 if (props.is_waiting) {
                     actionButtons = `
                         <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100 justify-center">
@@ -212,17 +200,21 @@
             };
 
             window.showTodayList = function(type) {
-                const now = new Date();
-                const currentHour = String(now.getHours()).padStart(2, '0');
-                const currentMinute = String(now.getMinutes()).padStart(2, '0');
-                const currentTime = currentHour + ':' + currentMinute;
+                var now = new Date();
+                var currentHour = String(now.getHours()).padStart(2, '0');
+                var currentMinute = String(now.getMinutes()).padStart(2, '0');
+                var currentTime = currentHour + ':' + currentMinute;
 
-                const filtered = eventsData.filter(ev => {
-                    const evDate = ev.start.split('T')[0];
+                var filtered = eventsData.filter(ev => {
+                    if (!ev.start) return false;
+                    var evDate = ev.start.split('T')[0];
                     if (evDate !== serverToday) return false; 
                     
                     if (type === 'next') {
-                        const evTime = ev.start.split('T')[1].substring(0, 5);
+                        var evTime = '00:00';
+                        if (ev.start.includes('T')) {
+                            evTime = ev.start.split('T')[1].substring(0, 5);
+                        }
                         return ev.extendedProps.is_waiting === true && evTime >= currentTime;
                     }
                     return true;
@@ -238,13 +230,18 @@
                     return;
                 }
 
-                let listHtml = `<div class="text-left space-y-3 max-h-80 overflow-y-auto pr-2 mt-4">`;
+                var listHtml = '<div class="text-left space-y-3 max-h-80 overflow-y-auto pr-2 mt-4">';
                 filtered.forEach(ev => {
+                    var jamWib = '';
+                    if (ev.start && ev.start.includes('T')) {
+                        jamWib = ev.start.split('T')[1].substring(0,5);
+                    }
+
                     listHtml += `
                         <div class="p-4 border border-gray-100 rounded-2xl flex justify-between items-center bg-gray-50 hover:bg-white hover:shadow-sm transition">
                             <div>
                                 <p class="font-bold text-gray-800">${ev.title}</p>
-                                <p class="text-[10px] font-bold text-pink-500 uppercase">${ev.start.split('T')[1].substring(0,5)} WIB</p>
+                                <p class="text-[10px] font-bold text-pink-500 uppercase">${jamWib} WIB</p>
                             </div>`;
                     
                     if (type === 'next') {
@@ -253,14 +250,14 @@
                                 <button onclick="processAction(${ev.id}, 'completed', 'Selesaikan layanan ini?')" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-xl hover:bg-emerald-500 hover:text-white transition text-xs font-bold">
                                     Selesai
                                 </button>
-                                <button onclick="processAction(${event.id}, 'cancelled', 'Batalkan booking ini?')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold">
+                                <button onclick="processAction(${ev.id}, 'cancelled', 'Batalkan booking ini?')" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-500 hover:text-white transition text-xs font-bold">
                                     Batalkan
                                 </button>
                             </div>`;
                     }
-                    listHtml += `</div>`;
+                    listHtml += '</div>';
                 });
-                listHtml += `</div>`;
+                listHtml += '</div>';
 
                 Swal.fire({
                     title: type === 'next' ? 'Antrean Selanjutnya' : 'Semua Agenda Hari Ini',
@@ -284,7 +281,7 @@
                     customClass: { popup: 'rounded-3xl' }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        let form = document.getElementById('status-form');
+                        var form = document.getElementById('status-form');
                         form.action = "{{ url('admin/bookings') }}/" + id + "/status";
                         document.getElementById('status-input').value = status;
                         form.submit();

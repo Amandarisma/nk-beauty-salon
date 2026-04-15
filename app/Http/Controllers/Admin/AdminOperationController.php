@@ -17,15 +17,12 @@ class AdminOperationController extends Controller
     {
         $today = Carbon::today();
 
-        // 1. Total Booking Hari Ini
         $totalBookingsToday = Booking::whereDate('booking_date', $today)->count();
 
-        // 2. Hitung semua yang BELUM SELESAI dan BELUM BATAL
         $pendingBookingsToday = Booking::whereDate('booking_date', $today)
             ->whereNotIn('booking_status', ['completed', 'cancelled'])
             ->count();
 
-        // 3. Ambil Data Kalender (Hanya yang tidak dibatalkan)
         $bookings = Booking::with(['user', 'items.treatment'])
             ->where('booking_status', '!=', 'cancelled')
             ->get();
@@ -38,32 +35,30 @@ class AdminOperationController extends Controller
             if($firstItem) {
                 $eventDateTime = Carbon::parse($firstItem->scheduled_date . ' ' . $firstItem->scheduled_time);
                 
-                // 🔥 MATEMATIKA KASIR PINTAR
+                // LOGIKA KEUANGAN (FINAL PERFECTION)
                 $totalAsli = $booking->total_price;
                 
+                // Cek status pembayaran dengan lebih spesifik
                 if ($booking->payment_status == 'paid') {
                     $sudahBayar = $totalAsli;
+                } elseif ($booking->payment_status == 'paid_dp' || $booking->payment_status == 'dp') {
+                    $sudahBayar = ($booking->dp_amount > 0) ? $booking->dp_amount : ($totalAsli * 0.3);
                 } else {
-                    $sudahBayar = $booking->dp_amount ?? 0;
+                    // Jika pending / unpaid / menunggu
+                    $sudahBayar = 0; 
                 }
                 
-                $sisaPelunasan = $totalAsli - $sudahBayar;
+                $sisaPelunasan = max(0, $totalAsli - $sudahBayar);
 
-
-                // 🔥 LOGIKA WARNA SOFT PASTEL ESTETIK 🔥
                 $isPastDay = Carbon::parse($firstItem->scheduled_date)->isBefore(Carbon::today());
 
                 if ($booking->booking_status == 'completed' || $isPastDay) {
-                    // Selesai / Sudah Lewat -> Abu-abu kalem
                     $bgColor = '#f3f4f6'; $borderColor = '#e5e7eb'; $textColor = '#6b7280'; 
                 } elseif ($booking->payment_status == 'paid') {
-                    // Lunas 100% -> Hijau Soft
                     $bgColor = '#d1fae5'; $borderColor = '#a7f3d0'; $textColor = '#065f46'; 
-                } elseif ($booking->payment_status == 'paid_dp') {
-                    // DP 30% -> Biru Soft
+                } elseif ($booking->payment_status == 'paid_dp' || $booking->payment_status == 'dp') {
                     $bgColor = '#dbeafe'; $borderColor = '#bfdbfe'; $textColor = '#1e40af'; 
                 } else {
-                    // Pending / Belum Bayar -> Kuning Soft
                     $bgColor = '#fef3c7'; $borderColor = '#fde68a'; $textColor = '#92400e'; 
                 }
 
@@ -72,7 +67,8 @@ class AdminOperationController extends Controller
                 if ($isWalkIn) $customerName .= ' (Walk-in)';
 
                 $treatmentList = $booking->items->map(function($item) {
-                    return '• ' . ($item->treatment->name ?? 'Layanan');
+                    $nama = $item->treatment->name ?? $item->treatment->nama_layanan ?? 'Layanan Salon';
+                    return '- ' . $nama; 
                 })->implode('<br>');
 
                 $formattedTime = $eventDateTime->translatedFormat('d M Y') . ' - ' . $eventDateTime->format('H:i') . ' WIB';
@@ -84,16 +80,18 @@ class AdminOperationController extends Controller
                     'start' => $firstItem->scheduled_date . 'T' . $firstItem->scheduled_time,
                     'backgroundColor' => $bgColor,
                     'borderColor' => $borderColor,
-                    'textColor' => $textColor, // Kirim warna teks gelap ke kalender
-                    
+                    'textColor' => $textColor, 
                     'payment_status' => $booking->payment_status,
                     'booking_status' => $booking->booking_status,
-                    'treatments'     => $treatmentList,
-                    'total_asli'     => number_format($totalAsli, 0, ',', '.'),
-                    'sudah_bayar'    => number_format($sudahBayar, 0, ',', '.'),
-                    'sisa_bayar'     => number_format($sisaPelunasan, 0, ',', '.'),
                     'waktu_lengkap'  => $formattedTime,
-                    'is_waiting'     => $isWaiting
+                    'is_waiting'     => $isWaiting,
+                    'layanan'        => $treatmentList,
+                    'total_asli_raw' => $totalAsli,
+                    'sudah_dp_raw'   => $sudahBayar,
+                    'sisa_raw'       => $sisaPelunasan,
+                    'total_asli'     => number_format($totalAsli, 0, ',', '.'),
+                    'sudah_dp'       => number_format($sudahBayar, 0, ',', '.'),
+                    'sisa'           => number_format($sisaPelunasan, 0, ',', '.')
                 ];
             }
         }
