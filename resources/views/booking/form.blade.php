@@ -176,34 +176,34 @@ function generateTimeSlots(start = "09:00", end = "17:00", interval = 60) {
     return slots;
 }
 
-// 🔥 LOAD SLOT
-dateInput.addEventListener('change', function () {
+// 🔥 load slot
+dateInput.addEventListener('change', async function () {
+
     const date = this.value;
 
-    fetch(`/api/booked-slots?date=${date}`)
-        .then(res => res.json())
-        .then(bookedSlots => {
+    // Mengambil data jadwal yang sudah terisi dari database
+    const res = await fetch(`/api/booked-slots?date=${date}`);
+    const bookedSlots = await res.json();
 
-            timeSelect.innerHTML = '<option value="">-- pilih jam --</option>';
+    timeSelect.innerHTML = '<option value="">-- pilih jam --</option>';
 
-            const allSlots = generateTimeSlots();
+    const slots = generateSlots();
 
-            allSlots.forEach(time => {
+    slots.forEach(time => {
+        let option = document.createElement('option');
+        option.value = time;
 
-                let option = document.createElement('option');
-                option.value = time;
+// 🔥 LOGIKA VALIDASI: Mematikan slot yang bentrok
+if (bookedSlots.includes(time)) {
+    option.textContent = time + " (Sudah Dipesan)";
+    option.disabled = true; // <-- INI YANG MEMBUAT ABU-ABU & TIDAK BISA DIKLIK
+} else {
+    option.textContent = time;
+}
 
-                if (bookedSlots.includes(time)) {
-                    option.textContent = time + " (TERISI)";
-                    option.disabled = true;
-                } else {
-                    option.textContent = time;
-                }
+timeSelect.appendChild(option);
+    });
 
-                timeSelect.appendChild(option);
-            });
-
-        });
 });
 
 // 🔥 REALTIME UPDATE CART
