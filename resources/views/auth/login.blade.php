@@ -8,6 +8,7 @@
     </div>
 
     <form method="POST" action="{{ route('login') }}">
+        // Framework Laravel yang di gunakan menangkal serangan form palsu 
         @csrf
 
         <!-- Email Address -->

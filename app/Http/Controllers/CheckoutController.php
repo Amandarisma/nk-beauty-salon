@@ -10,6 +10,7 @@ use App\Models\BookingItem;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+//Tempat ngecek jadwal bentrok, ngitung total harga/DP, dan nentuin siapa cepat dia dapat jadwalnya.
 class CheckoutController extends Controller
 {
     /**
@@ -44,7 +45,8 @@ class CheckoutController extends Controller
         // Sort berdasarkan jam
         $carts = $carts->sortBy('booking_time')->values();
 
-        // 🔥 CEK BENTROK PER ITEM (ABAIKAN YANG PENDING ATAU BATAL)
+        // 🔥🔥 CEK BENTROK PER ITEM (ABAIKAN YANG PENDING ATAU BATAL)🔥🔥
+        // [BLOK 1]: Ngitung durasi waktu (aktu selesai dihitung otomatis berdasarkan durasi treatment)
         foreach ($carts as $cart) {
             $start = Carbon::parse($cart->booking_date . ' ' . $cart->booking_time);
             $end   = $start->copy()->addMinutes($cart->treatment->duration);
@@ -53,11 +55,12 @@ class CheckoutController extends Controller
                 return back()->with('error', 'Tidak bisa booking di waktu yang sudah lewat.');
             }
 
+            // 🔥 🔥 [BLOK 2]: Cek Jadwal di Database🔥 🔥 
             // Cek overlap: HANYA PEDULI JADWAL YANG UDAH BAYAR DAN GAK BATAL
             $conflict = BookingItem::join('bookings', 'booking_items.booking_id', '=', 'bookings.id')
                 ->where('booking_items.scheduled_date', $cart->booking_date)
-                ->whereIn('bookings.payment_status', ['paid', 'paid_dp'])
-                ->where('bookings.booking_status', '!=', 'cancelled')
+                ->whereIn('bookings.payment_status', ['paid', 'paid_dp']) //Cuma yang udah bayar yang di kunci jadwalnya
+                ->where('bookings.booking_status', '!=', 'cancelled') //klo cancel jadwal kosong lagi alias diabaikan
                 ->where(function ($query) use ($start, $end) {
                     $query->where('booking_items.scheduled_time', '<', $end->format('H:i:s'))
                           ->where(DB::raw("ADDTIME(booking_items.scheduled_time, SEC_TO_TIME(60 * 60))"), '>', $start->format('H:i:s'));
@@ -121,7 +124,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * 🔥 STEP 3: KONFIRMASI PEMBAYARAN (SISTEM REBUTAN JADWAL)
+     * 🔥🔥🔥 STEP 3: KONFIRMASI PEMBAYARAN (SISTEM REBUTAN JADWAL)🔥🔥🔥
      */
     public function confirmPayment($id)
     {
@@ -155,18 +158,29 @@ class CheckoutController extends Controller
                 ]);
             }
         }
+//jika aman lanjut bayar 
+// --- 🔥🔥 PROSES SIMULASI PEMBAYARAN OTOMATIS 🔥🔥---
 
-        // JIKA AMAN, LANJUT SIMPAN PEMBAYARAN
+        // 1. Logika Pengecekan: Membandingkan jumlah DP/Uang yang dibayar dengan Total Harga.
+        // Jika uang DP sama dengan atau lebih besar dari total harga, berarti LUNAS.
         $isLunas = $booking->dp_amount >= $booking->total_price;
+
+        // 2. Penentuan Status: Jika lunas beri label 'paid', jika belum beri label 'paid_dp'.
         $statusPembayaran = $isLunas ? 'paid' : 'paid_dp';
+
+        // 3. Custom Pesan: Menyiapkan kata-kata manis untuk pop-up sesuai status pembayarannya.
         $pesanPopUp = $isLunas 
             ? 'Booking kamu sudah dikonfirmasi secara LUNAS. Terima kasih!' 
             : 'Booking kamu sudah dikonfirmasi dengan pembayaran DP (Uang Muka).';
 
+        // 4. Update Database: Mengubah status di tabel booking secara permanen.
+        // Status pembayaran diisi (Lunas/DP), dan status booking diubah jadi 'confirmed' (disetujui).
         $booking->payment_status = $statusPembayaran;
         $booking->booking_status = 'confirmed';
         $booking->save();
 
+        // 5. Redirect & Notifikasi: Mengarahkan user kembali ke daftar booking miliknya
+        // sambil membawa data 'alert' untuk memunculkan notifikasi sukses (SweetAlert).
         return redirect()->route('user.bookings')
             ->with('alert', [
                 'type' => 'success',
@@ -206,7 +220,7 @@ class CheckoutController extends Controller
         $date = $request->query('date');
         if (!$date) return response()->json([]);
 
-        // 🔥 KUNCI: HANYA BLOKIR JAM JIKA STATUSNYA SUDAH BAYAR DAN TIDAK BATAL
+        // 🔥🔥 🔥  KUNCI: HANYA BLOKIR JAM JIKA STATUSNYA SUDAH BAYAR DAN TIDAK BATAL🔥 🔥 🔥 
         $items = BookingItem::with('treatment')
             ->whereHas('booking', function($query) {
                 $query->whereIn('payment_status', ['paid', 'paid_dp'])

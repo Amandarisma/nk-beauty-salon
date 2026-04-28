@@ -15,7 +15,7 @@
         .modal-open { overflow: hidden; }
         .treatment-card { transition: all 0.3s ease; }
         
-        /* 🔥 SIHIR POP-UP SWEETALERT SUPER ESTETIK 🔥 */
+        /* 🔥🔥 SIHIR POP-UP SWEETALERT SUPER ESTETIK 🔥🔥 */
         div:where(.swal2-container) { background: rgba(17, 24, 39, 0.5) !important; backdrop-filter: blur(4px) !important; }
         div:where(.swal2-popup) { border-radius: 1.5rem !important; padding: 2.5rem 1.5rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; border: 1px solid #fdf2f8 !important; }
         h2:where(.swal2-title) { font-weight: 800 !important; color: #111827 !important; font-size: 1.5rem !important; margin-bottom: 0.5rem !important; }
