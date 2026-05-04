@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request; // PASTIKAN INI ADA
 use App\Models\Booking;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,5 +49,22 @@ class TransactionController extends Controller
         
         // Return untuk di download
         return $pdf->download($fileName);
+    }
+
+    // 🔥 FUNGSI BARU: UPDATE STATUS BAYAR DARI POP UP
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:paid_full,cancelled'
+        ]);
+
+        // Karena di tabelmu menggunakan model Booking, kita cari berdasarkan Booking ID
+        $transaction = Booking::findOrFail($id); 
+        
+        $transaction->update([
+            'payment_status' => $request->payment_status
+        ]);
+
+        return redirect()->back()->with('success', 'Status pembayaran berhasil diperbarui menjadi ' . ($request->payment_status == 'paid_full' ? 'Lunas' : 'Dibatalkan') . '.');
     }
 }

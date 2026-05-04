@@ -27,7 +27,10 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-pink-50 text-pink-600 text-xs uppercase tracking-wider border-b border-pink-100">
-                                <th class="p-4 font-bold rounded-tl-3xl w-24 text-center">Foto</th>
+                                <!-- TAMBAHAN: Kolom No dengan sudut melengkung -->
+                                <th class="p-4 font-bold rounded-tl-3xl w-16 text-center">No</th>
+                                <!-- UBAHAN: Class rounded-tl-3xl dihapus dari sini -->
+                                <th class="p-4 font-bold w-24 text-center">Foto</th>
                                 <th class="p-4 font-bold">Nama & Deskripsi Layanan</th>
                                 <th class="p-4 font-bold text-center">Durasi</th>
                                 <th class="p-4 font-bold text-right">Harga</th>
@@ -38,6 +41,11 @@
                             @forelse($treatments as $item)
                                 <tr class="hover:bg-gray-50 transition duration-150">
                                     
+                                    <!-- TAMBAHAN: Isi nomor -->
+                                    <td class="p-4 align-top pt-6 text-center font-semibold text-gray-600">
+                                        {{ $loop->iteration }}
+                                    </td>
+
                                     <td class="p-4 flex justify-center">
                                         @if($item->image)
                                             <img src="{{ asset('storage/' . $item->image) }}" class="w-14 h-14 object-cover rounded-xl shadow-sm border border-gray-200">
@@ -87,7 +95,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="p-8 text-center text-gray-400">
+                                    <!-- UBAHAN: colspan dari 5 jadi 6 -->
+                                    <td colspan="6" class="p-8 text-center text-gray-400">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                         </svg>

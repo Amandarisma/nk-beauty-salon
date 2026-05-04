@@ -1,4 +1,4 @@
-<x-app-layout>
+{{-- <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col">
             <h2 class="font-bold text-2xl text-pink-600 leading-tight">
@@ -125,4 +125,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout> --}}

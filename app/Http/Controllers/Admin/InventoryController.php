@@ -3,20 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Ini wajib ada untuk menangkap data dari URL
 use App\Models\BookingItem;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
-    public function index()
+    // Tambahkan Request $request di dalam kurung
+    public function index(Request $request)
     {
-        // 🔥 ambil range 7 hari terakhir
-        $endDate = Carbon::now();
-        $startDate = Carbon::now()->subDays(7);
+        // 🔥 LOGIKA BARU: Cek apakah ada parameter 'date' dari klik tombol navigasi
+        if ($request->has('date')) {
+            // Jika diklik tombol navigasi, jadikan tanggal tersebut sebagai Start Date
+            $startDate = Carbon::parse($request->date)->startOfDay();
+            // End Date adalah 7 hari setelah Start Date
+            $endDate = $startDate->copy()->addDays(7)->endOfDay();
+        } else {
+            // 🔥 DEFAULT: Jika baru pertama kali buka menu, ambil 7 hari terakhir dari hari ini
+            $endDate = Carbon::now()->endOfDay();
+            $startDate = Carbon::now()->subDays(7)->startOfDay();
+        }
 
-        // 🔥 ambil data penggunaan treatment
+        // 🔥 ambil data penggunaan treatment berdasarkan rentang tanggal yang dipilih
         $analytics = BookingItem::select(
                 'treatments.name',
                 DB::raw('COUNT(booking_items.id) as usage_count')

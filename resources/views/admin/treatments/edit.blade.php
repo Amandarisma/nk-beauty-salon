@@ -9,7 +9,7 @@
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 
-                <form action="{{ route('admin.treatments.update', $treatment->id) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('admin.treatments.update', $treatment->id) }}" method="POST" enctype="multipart/form-data" id="treatmentForm">
                     @csrf
                     @method('PUT')
                     
@@ -28,9 +28,15 @@
                             <label class="block text-gray-700 text-sm font-bold mb-2">Durasi (Menit)</label>
                             <input type="number" name="duration" value="{{ $treatment->duration }}" class="w-full border rounded p-2" required>
                         </div>
+                        
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">Harga (Rp)</label>
-                            <input type="number" name="price" value="{{ $treatment->price }}" class="w-full border rounded p-2" required>
+                            
+                            <!-- UBAHAN: Input type diubah jadi 'text', dan value di-format dengan pemisah ribuan -->
+                            <input type="text" id="inputHarga" value="{{ number_format(round($treatment->price), 0, '', '.') }}" class="w-full border rounded p-2" required>
+                            
+                            <!-- INPUT HIDDEN: Ini yang akan dikirim ke database (angka asli tanpa titik) -->
+                            <input type="hidden" name="price" id="hargaAsli" value="{{ round($treatment->price) }}">
                         </div>
                     </div>
 
@@ -54,4 +60,33 @@
             </div>
         </div>
     </div>
+
+    <!-- SCRIPT FORMAT RUPIAH OTOMATIS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var inputHarga = document.getElementById('inputHarga');
+            var hargaAsli = document.getElementById('hargaAsli');
+
+            inputHarga.addEventListener('keyup', function(e) {
+                // Hapus semua karakter yang bukan angka
+                var value = this.value.replace(/[^,\d]/g, '').toString();
+                var split = value.split(',');
+                var sisa = split[0].length % 3;
+                var rupiah = split[0].substr(0, sisa);
+                var ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+                // Tambahkan titik jika yang di input sudah menjadi angka ribuan
+                if (ribuan) {
+                    var separator = sisa ? '.' : '';
+                    rupiah += separator + ribuan.join('.');
+                }
+
+                // Tampilkan format rupiah ke pengguna
+                this.value = rupiah;
+                
+                // Simpan angka murni (tanpa titik) ke input hidden untuk dikirim ke database
+                hargaAsli.value = value; 
+            });
+        });
+    </script>
 </x-app-layout>

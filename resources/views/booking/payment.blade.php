@@ -75,7 +75,7 @@
         </div>
     @else
         <div class="text-right text-xs text-emerald-500 font-bold mt-1">
-            ✨ Layanan sudah dibayar lunas
+            Layanan dibayar lunas yaa! silahkan klik payment. Terima kasih ! 
         </div>
     @endif
 </div>

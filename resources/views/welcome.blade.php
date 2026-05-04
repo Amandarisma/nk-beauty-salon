@@ -173,7 +173,8 @@
                             <div class="space-y-4 text-left">
                                 <div>
                                     <label class="block text-gray-600 text-xs font-bold mb-2 ml-1 uppercase tracking-wide">Pilih Tanggal</label>
-                                    <input type="date" name="booking_date" id="bookingDateInput" min="{{ date('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border-gray-200 rounded-2xl p-3.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm bg-gray-50/50 transition font-medium text-gray-700" required>
+                                    <!-- KODE BARU YANG BENAR -->
+<input type="date" name="booking_date" id="bookingDateInput" min="{{ \Carbon\Carbon::now('Asia/Jakarta')->format('Y-m-d') }}" onchange="checkAvailableSlots()" class="w-full border-gray-200 rounded-2xl p-3.5 focus:ring-pink-500 focus:border-pink-500 shadow-sm bg-gray-50/50 transition font-medium text-gray-700" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-600 text-xs font-bold mb-2 ml-1 uppercase tracking-wide">Pilih Jam</label>
@@ -212,7 +213,6 @@
             </div>
         </div>
     </div>
-
 
     <section id="tentang" class="py-20 bg-gradient-to-b from-white to-pink-50 border-t border-pink-100">
         <div class="max-w-7xl mx-auto px-6 lg:px-8">
@@ -309,7 +309,7 @@
         document.getElementById('bookingModal').classList.add('hidden');
     }
 
-    // 🔥 FUNGSI AJAX: MENGUBAH JAM JADI ABU-ABU
+    // 🔥 FUNGSI AJAX: SENSOR WAKTU REAL-TIME (ANTI-JEBOL) 🔥
     function checkAvailableSlots() {
         let dateInput = document.getElementById('bookingDateInput').value;
         if(!dateInput) return;
@@ -325,19 +325,40 @@
         .then(blockedSlots => {
             timeSelect.options[0].text = "-- Pilih Jam (10:00 - 17:00) --";
 
-            // Cek satu-satu semua pilihan jam
+            // Siapkan waktu saat ini secara matematis
+            const now = new Date();
+            const [year, month, day] = dateInput.split('-').map(Number);
+
+            // Cek satu-satu semua pilihan jam di dalam dropdown
             for(let i = 1; i < timeSelect.options.length; i++) {
                 let option = timeSelect.options[i];
+                let timeStr = option.value; // Contoh: "10:00"
+
+                // Pecah jam jadi Angka
+                const [h, m] = timeStr.split(':').map(Number);
                 
-                // Jika jam ini masuk di daftar yang diblokir
-                if(blockedSlots.includes(option.value)) {
-                    option.disabled = true;
-                    option.text = option.value + " WIB (Sudah Dipesan)";
-                    option.style.backgroundColor = "#e5e7eb"; // warna abu-abu
+                // Rakit jadi Objek Waktu untuk jam opsi ini
+                const slotDateTime = new Date(year, month - 1, day, h, m, 0);
+
+                // CEK MATEMATIS: Apakah jam slot ini SUDAH LEWAT dari jam sekarang?
+                const isPastTime = slotDateTime < now;
+
+                // Jika jam ini masuk di daftar yang diblokir ATAU sudah lewat waktunya
+                if(blockedSlots.includes(timeStr) || blockedSlots.includes(timeStr+':00') || isPastTime) {
+                    
+                    option.disabled = true; // Langsung dimatikan biar gak bisa diklik!
+                    option.style.backgroundColor = "#f3f4f6"; // warna abu-abu
                     option.style.color = "#9ca3af";
+                    
+                    if (isPastTime && !blockedSlots.includes(timeStr) && !blockedSlots.includes(timeStr+':00')) {
+                        option.text = timeStr + " WIB (Sudah Lewat)";
+                    } else {
+                        option.text = timeStr + " WIB (Sudah Dipesan)";
+                    }
+                    
                 } else {
                     option.disabled = false;
-                    option.text = option.value + " WIB";
+                    option.text = timeStr + " WIB";
                     option.style.backgroundColor = "";
                     option.style.color = "";
                 }

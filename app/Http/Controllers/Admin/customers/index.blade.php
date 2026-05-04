@@ -1,4 +1,4 @@
-<x-app-layout>
+{{-- <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-pink-600 leading-tight">
             {{ __('Data Pelanggan (CRM)') }}
@@ -103,4 +103,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-app-layout> --}}

@@ -108,9 +108,9 @@
                 @else
                     {{-- // Auth Links: Menampilkan tombol Login dan Register jika pengguna belum terautentikasi (Guest) --}}
                     <div class="flex items-center space-x-4">
-                        <a href="{{ route('login') }}" class="text-gray-600 hover:text-pink-600 font-bold transition">Log in</a>
+                        <a href="{{ route('login') }}" class="text-gray-600 hover:text-pink-500 font-bold transition">Log in</a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="px-5 py-2 bg-pink-500 text-white rounded-full font-bold hover:bg-pink-600 hover:-translate-y-0.5 transition transform shadow-md">Daftar</a>
+                            <a href="{{ route('register') }}" class="px-5 py-2 bg-pink-500 text-white rounded-full font-bold hover:bg-pink-600 hover:-translate-y-0.5 transition transform shadow-md">Registrasi</a>
                         @endif
                     </div>
                 @endauth

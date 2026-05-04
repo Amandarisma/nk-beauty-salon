@@ -10,7 +10,7 @@
 
             {{-- ALERT --}}
             @if(session('error'))
-                <div class="bg-red-100 text-red-600 p-3 rounded mb-4">
+                <div class="bg-red-100 text-red-600 p-3 rounded mb-4 font-bold">
                     {{ session('error') }}
                 </div>
             @endif
@@ -21,215 +21,141 @@
 
                 {{-- TANGGAL --}}
                 <div class="mb-4">
-                    <label class="block font-semibold mb-1">Tanggal</label>
+                    <label class="block font-semibold mb-1 text-gray-700">Pilih Tanggal</label>
                     <input 
                         type="date" 
                         id="booking_date" 
-                        class="w-full border rounded px-3 py-2"
+                        name="booking_date"
+                        class="w-full border-gray-300 rounded-xl px-4 py-2 focus:ring-pink-500 focus:border-pink-500"
                         required
                     >
                 </div>
 
                 {{-- JAM --}}
-                <div class="mb-4">
-                    <label class="block font-semibold mb-1">Jam</label>
+                <div class="mb-6">
+                    <label class="block font-semibold mb-1 text-gray-700">Pilih Jam</label>
                     <select 
                         id="booking_time" 
-                        class="w-full border rounded px-3 py-2"
+                        name="booking_time"
+                        class="w-full border-gray-300 rounded-xl px-4 py-2 focus:ring-pink-500 focus:border-pink-500"
                         required
                     >
-                        <option value="">-- pilih jam --</option>
+                        <option value="">-- Pilih Jam (10:00 - 17:00) --</option>
                     </select>
                 </div>
 
-                <button class="w-full bg-pink-500 text-white py-2 rounded-lg font-bold">
-                    Checkout
+                <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-bold transition duration-200">
+                    Simpan Keranjang & Lanjut
                 </button>
             </form>
-
-            <script>
-const dateInput = document.getElementById('booking_date');
-const timeSelect = document.getElementById('booking_time');
-
-let userDuration = 60; // default
-
-// 🔥 ambil durasi dari cart
-fetch('/cart/total-duration/data')
-    .then(res => res.json())
-    .then(data => {
-        userDuration = data.duration || 60;
-    });
-
-// 🔥 generate slot per 30 menit
-function generateSlots() {
-    let slots = [];
-    let start = 9 * 60;   // 09:00
-    let end = 17 * 60;    // 17:00
-
-    for (let t = start; t < end; t += 30) {
-        let h = Math.floor(t / 60);
-        let m = t % 60;
-        slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
-    }
-
-    return slots;
-}
-
-// 🔥 cek apakah bentrok
-function isConflict(time, bookedSlots) {
-    let [h, m] = time.split(':').map(Number);
-    let start = h * 60 + m;
-    let end = start + userDuration;
-
-    for (let t = start; t < end; t += 30) {
-        let hh = Math.floor(t / 60);
-        let mm = t % 60;
-        let check = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
-
-        if (bookedSlots.includes(check)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// 🔥 load slot
-dateInput.addEventListener('change', async function () {
-
-    const date = this.value;
-
-    const res = await fetch(`/api/booked-slots?date=${date}`);
-    const bookedSlots = await res.json();
-
-    timeSelect.innerHTML = '<option value="">-- pilih jam --</option>';
-
-    const slots = generateSlots();
-
-    slots.forEach(time => {
-
-        let option = document.createElement('option');
-        option.value = time;
-
-        // 🔥 langsung cek tanpa function tambahan
-        if (bookedSlots.includes(time)) {
-            option.textContent = time + " 🔴 FULL";
-            option.disabled = true;
-        } else {
-            option.textContent = time;
-        }
-
-        timeSelect.appendChild(option);
-    });
-
-});
-
-// 🔥 update cart realtime
-timeSelect.addEventListener('change', function () {
-
-    const date = dateInput.value;
-    const time = this.value;
-
-    if (!date || !time) return;
-
-    fetch("{{ route('cart.updateSchedule') }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({
-            booking_date: date,
-            booking_time: time
-        })
-    });
-});
-
-
-</script>
 
         </div>
     </div>
 
+{{-- 🔥 SCRIPT MATEMATIKA WAKTU (ANTI-JEBOL) 🔥 --}}
 <script>
-const dateInput = document.getElementById('booking_date');
-const timeSelect = document.getElementById('booking_time');
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('booking_date');
+    const timeSelect = document.getElementById('booking_time');
 
-// 🔥 GENERATE SLOT DINAMIS (SMART SLOT)
-function generateTimeSlots(start = "09:00", end = "17:00", interval = 60) {
-    let slots = [];
-    let [h, m] = start.split(':').map(Number);
+    let userDuration = 60; // Default
 
-    while (true) {
-        let time = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-        slots.push(time);
+    // Ambil durasi
+    fetch('/cart/total-duration/data')
+        .then(res => res.json())
+        .then(data => {
+            if (data.duration) userDuration = data.duration;
+        })
+        .catch(err => console.log("Gagal ambil durasi:", err));
 
-        m += interval;
-        if (m >= 60) {
-            h += Math.floor(m / 60);
-            m = m % 60;
+    // Bikin opsi jam
+    function generateSlots() {
+        let slots = [];
+        for (let t = 10 * 60; t <= 17 * 60; t += 30) {
+            let h = Math.floor(t / 60);
+            let m = t % 60;
+            slots.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
         }
-
-        if (`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}` >= end) break;
+        return slots;
     }
 
-    return slots;
-}
+    // Saat tanggal diklik
+    dateInput.addEventListener('change', async function () {
+        const selectedDate = this.value; // Dapatnya format YYYY-MM-DD
+        if (!selectedDate) return;
 
-// 🔥 load slot
-dateInput.addEventListener('change', async function () {
+        timeSelect.innerHTML = '<option value="">Sedang memuat jadwal...</option>';
 
-    const date = this.value;
+        try {
+            const res = await fetch(`/api/booked-slots?date=${selectedDate}`);
+            const bookedSlots = await res.json();
 
-    // Mengambil data jadwal yang sudah terisi dari database
-    const res = await fetch(`/api/booked-slots?date=${date}`);
-    const bookedSlots = await res.json();
+            timeSelect.innerHTML = '<option value="">-- Pilih Jam (10:00 - 17:00) --</option>';
+            const slots = generateSlots();
 
-    timeSelect.innerHTML = '<option value="">-- pilih jam --</option>';
+            // 🔥 LOGIKA MATEMATIKA WAKTU 🔥
+            const now = new Date(); // Detik ini juga
+            
+            // Pecah tanggal yang dipilih jadi Angka (Tahun, Bulan, Hari)
+            const [year, month, day] = selectedDate.split('-').map(Number);
 
-    const slots = generateSlots();
+            slots.forEach(time => {
+                let option = document.createElement('option');
+                option.value = time;
 
-    slots.forEach(time => {
-        let option = document.createElement('option');
-        option.value = time;
+                // Pecah jam di list jadi Angka (Jam, Menit)
+                const [h, m] = time.split(':').map(Number);
+                
+                // Rakit jadi Objek Waktu yang SUPER AKURAT
+                // Catatan: Di JS bulan dimulai dari 0, makanya month - 1
+                const slotDateTime = new Date(year, month - 1, day, h, m, 0);
 
-// 🔥 LOGIKA VALIDASI: Mematikan slot yang bentrok
-if (bookedSlots.includes(time)) {
-    option.textContent = time + " (Sudah Dipesan)";
-    option.disabled = true; // <-- INI YANG MEMBUAT ABU-ABU & TIDAK BISA DIKLIK
-} else {
-    option.textContent = time;
-}
+                // CEK MUTLAK: Apakah waktu slot tersebut LEBIH KECIL (sudah lewat) dari waktu sekarang?
+                const isPastTime = slotDateTime < now;
 
-timeSelect.appendChild(option);
+                if (bookedSlots.includes(time) || bookedSlots.includes(time+':00') || isPastTime) {
+                    
+                    if (isPastTime && !bookedSlots.includes(time) && !bookedSlots.includes(time+':00')) {
+                        option.textContent = time + " WIB (Sudah Lewat)";
+                    } else {
+                        option.textContent = time + " WIB (Sudah Dipesan)";
+                    }
+                    
+                    option.disabled = true; // Langsung dimatikan!
+                    option.classList.add('bg-gray-100', 'text-gray-400');
+                    
+                } else {
+                    option.textContent = time + " WIB";
+                }
+
+                timeSelect.appendChild(option);
+            });
+
+        } catch (error) {
+            console.error("Gagal load jadwal:", error);
+            timeSelect.innerHTML = '<option value="">Gagal memuat jadwal. Coba lagi.</option>';
+        }
     });
 
-});
+    // Update Keranjang
+    timeSelect.addEventListener('change', function () {
+        const date = dateInput.value;
+        const time = this.value;
 
-// 🔥 REALTIME UPDATE CART
-timeSelect.addEventListener('change', function () {
+        if (!date || !time) return;
 
-    const date = dateInput.value;
-    const time = this.value;
-
-    if (!date || !time) return;
-
-    fetch("{{ route('cart.updateSchedule') }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({
-            booking_date: date,
-            booking_time: time
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log("Cart updated:", data);
+        fetch("{{ route('cart.updateSchedule') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                booking_date: date,
+                booking_time: time
+            })
+        }).catch(err => console.log("Gagal update cart:", err));
     });
-
 });
 </script>
 </x-app-layout>

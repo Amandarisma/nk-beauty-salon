@@ -1,14 +1,34 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col">
-            <h2 class="font-bold text-2xl text-pink-600 leading-tight">
-                {{ __('Analisis Penggunaan Stok') }}
-            </h2>
-            <p class="text-sm text-gray-500 mt-1">
-                Berdasarkan transaksi periode: 
-                <!-- Data tanggal dikirim dari Controller -->
-                <span class="font-bold text-gray-700">{{ $startDate->translatedFormat('d M') }} - {{ $endDate->translatedFormat('d M Y') }}</span>
-            </p>
+<x-slot name="header">
+        <div class="flex justify-between items-end">
+            <!-- Bagian Kiri: Judul dan Teks Periode -->
+            <div>
+                <h2 class="font-bold text-2xl text-pink-600 leading-tight">
+                    {{ __('Analisis Penggunaan Stok') }}
+                </h2>
+                <p class="text-sm text-gray-500 mt-2">
+                    Berdasarkan transaksi periode: 
+                    <span class="font-bold text-gray-700">{{ $startDate->translatedFormat('d M') }} - {{ $endDate->translatedFormat('d M Y') }}</span>
+                </p>
+            </div>
+
+            <!-- Bagian Kanan: Tombol Navigasi Kalender -->
+            <div class="flex items-center gap-3 pb-0.5">
+                <div class="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                    <!-- Tombol Mundur 7 Hari -->
+                    <a href="{{ route('admin.inventory.index', ['date' => $startDate->copy()->subDays(7)->format('Y-m-d')]) }}" class="px-3 py-1.5 border-r border-gray-200 hover:bg-gray-50 text-gray-600 transition" title="7 Hari Sebelumnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </a>
+                    <!-- Tombol Maju 7 Hari -->
+                    <a href="{{ route('admin.inventory.index', ['date' => $startDate->copy()->addDays(7)->format('Y-m-d')]) }}" class="px-3 py-1.5 hover:bg-gray-50 text-gray-600 transition" title="7 Hari Selanjutnya">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </div>
+                <!-- Tombol Reset ke Hari Ini -->
+                <a href="{{ route('admin.inventory.index') }}" class="px-4 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-sm font-semibold text-gray-700 transition">
+                    Minggu Ini
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -62,7 +82,7 @@
                             <thead class="bg-pink-50">
                                 <tr>
                                     <th class="px-6 py-4 text-left text-xs font-extrabold text-pink-500 uppercase tracking-wider rounded-l-xl">Layanan / Treatment</th>
-                                    <th class="px-6 py-4 text-left text-xs font-extrabold text-pink-500 uppercase tracking-wider">Frekuensi (7 Hari)</th>
+                                    <th class="px-6 py-4 text-left text-xs font-extrabold text-pink-500 uppercase tracking-wider">Frekuensi (Periode Ini)</th>
                                     <th class="px-6 py-4 text-left text-xs font-extrabold text-pink-500 uppercase tracking-wider">Estimasi Pemakaian</th>
                                     <th class="px-6 py-4 text-left text-xs font-extrabold text-pink-500 uppercase tracking-wider rounded-r-xl">Status Stok Bahan</th>
                                 </tr>
@@ -86,7 +106,6 @@
                                     <!-- Progress Bar Visual -->
                                     <td class="px-6 py-4 whitespace-nowrap align-middle">
                                         <div class="w-full bg-gray-200 rounded-full h-2.5 max-w-[150px]">
-                                            <!-- Panjang bar tergantung jumlah usage, max 15 dianggap 100% -->
                                             @php $percent = min(($item->usage_count / 15) * 100, 100); @endphp
                                             <div class="h-2.5 rounded-full {{ $item->usage_count > 10 ? 'bg-red-500' : ($item->usage_count > 4 ? 'bg-yellow-400' : 'bg-green-500') }}" 
                                                  style="width: {{ $percent }}%"></div>
@@ -97,16 +116,16 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($item->usage_count > 10)
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-700 border border-red-200 animate-pulse">
-                                                🚨 Stok Kritis
+                                                 Stok Kritis
                                             </span>
                                             <div class="text-[10px] text-red-500 mt-1 font-medium">Segera Restock Bahan!</div>
                                         @elseif($item->usage_count > 4)
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
-                                                ⚠️ Stok Menipis
+                                                 Stok Menipis
                                             </span>
                                         @else
                                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-700 border border-green-200">
-                                                ✅ Aman
+                                                 Aman
                                             </span>
                                         @endif
                                     </td>
@@ -114,7 +133,7 @@
                                 @empty
                                 <tr>
                                     <td colspan="4" class="px-6 py-10 text-center text-gray-400 italic">
-                                        Belum ada transaksi dalam 7 hari terakhir. Stok dianggap aman.
+                                        Belum ada transaksi dalam periode ini. Stok dianggap aman.
                                     </td>
                                 </tr>
                                 @endforelse
