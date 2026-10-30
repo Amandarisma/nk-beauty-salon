@@ -11,12 +11,25 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {
-        // \App\Models\User::factory(10)->create();
+{
+    // Membuat Akun Admin
+    \App\Models\User::create([
+        'name' => 'Admin Nafisa',
+        'email' => 'nafisa123@gmail.com',
+        'password' => bcrypt('nafisa123'),
+        'role' => 'admin'
+    ]);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-    }
+    // Membuat Akun User Biasa
+    \App\Models\User::create([
+        'name' => 'User Lintang',
+        'email' => 'lintang321@gmail.com',
+        'password' => bcrypt('lintang321'),
+        'role' => 'user'
+    ]);
+    $this->call([
+        TreatmentSeeder::class,
+    ]);
+}
+
 }

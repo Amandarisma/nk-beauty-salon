@@ -10,7 +10,7 @@ use App\Models\BookingItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf; // 🔥 Ini posisi yang benar, di luar class!
+use Barryvdh\DomPDF\Facade\Pdf; // 
 
 class AdminOperationController extends Controller
 {
@@ -117,7 +117,7 @@ class AdminOperationController extends Controller
             $antreanSelanjutnyaLayanan = '-';
         }
 
-        // GRAFIK KEUANGAN
+        // 🔥🔥🔥GRAFIK KEUANGAN 🔥🔥🔥
         $allTreatments = Treatment::all(); 
         $daysInMonth = $currentDate->daysInMonth;
         
@@ -163,7 +163,7 @@ class AdminOperationController extends Controller
             ];
         }
 
-        // LAYANAN POPULER & TOP 5
+        // 🔥🔥🔥 LAYANAN POPULER & TOP 5 🔥🔥🔥
         $layananPopulerRaw = BookingItem::join('bookings', 'booking_items.booking_id', '=', 'bookings.id')
             ->join('treatments', 'booking_items.treatment_id', '=', 'treatments.id')
             ->select('treatments.name', DB::raw('COUNT(booking_items.id) as total_dipesan'))
@@ -205,7 +205,7 @@ class AdminOperationController extends Controller
     }
 
     // ====================================================================
-    // 2. EXPORT PDF DINAMIS
+    // 🔥🔥🔥 2. EXPORT PDF DINAMIS 🔥🔥🔥
     // ====================================================================
     public function exportPdf(Request $request)
     {

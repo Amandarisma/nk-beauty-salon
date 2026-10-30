@@ -286,7 +286,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             Chart.register(ChartDataLabels);
 
-            // --- 1. LOGIKA GRAFIK KEUANGAN ---
+            // --- 🔥🔥🔥 1. LOGIKA GRAFIK KEUANGAN 🔥🔥🔥 ---
             const ctxLine = document.getElementById('revenueLineChart');
             if(ctxLine) {
                 new Chart(ctxLine, {
@@ -354,7 +354,7 @@
                 });
             }
 
-            // --- 2. LOGIKA LAYANAN POPULER ---
+            // ---🔥🔥🔥 2. LOGIKA LAYANAN POPULER 🔥🔥🔥---
             const ctxPop = document.getElementById('popularPieChart');
             const dataLayanan = @json($pieValues ?? []);
             const persentaseLayanan = @json($persentaseLayanan ?? []);
